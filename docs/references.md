@@ -7,6 +7,12 @@ captures out of this repository.
 
 ## Python client
 
+The login implementation and its test vectors follow commit
+[`8ab0634b292e64f5198d979636e01616ea6af34f`](https://github.com/SAIC-iSmart-API/saic-python-client-ng/tree/8ab0634b292e64f5198d979636e01616ea6af34f).
+The source map below still links to the moving branch for general research.
+See the [login spec](login.md) for the implemented behavior and
+[fixture notes](../tests/fixtures/README.md) for how the vectors were generated.
+
 Start with
 [SAIC-iSmart-API/saic-python-client-ng](https://github.com/SAIC-iSmart-API/saic-python-client-ng).
 Our local MQTT gateway declares `saic-ismart-client-ng >=0.10.0,<0.11.0` in its
@@ -86,6 +92,7 @@ and [ASN.1 schemas](https://github.com/SAIC-iSmart-API/documentation/tree/main/A
 Use these to investigate fields and older protocol variants. Check the current
 endpoints before deciding whether we need ASN.1 support.
 
-If we copy upstream code, schemas, or fixtures, keep their license and attribution
-notices. There's no copied upstream code in the scaffold. We still need to choose
-this project's license before publishing.
+The login protocol is ported from the Python client. Its attribution and license
+are in [Third party notices](../THIRD_PARTY_NOTICES.md). Keep those notices with
+the code and fixtures. We still need to choose this project's license before
+publishing.

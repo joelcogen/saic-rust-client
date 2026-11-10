@@ -3,7 +3,8 @@
 We'll build an async Rust client that talks directly to SAIC, using the Python
 client as the protocol reference. The web service will live in a separate
 repository and handle polling, preheating rules, and notifications. This is the
-design for that client; no API calls are implemented yet.
+design for that client. [Login](login.md) is implemented and tested offline;
+vehicle operations are still planned.
 
 ## What belongs in the client
 
@@ -127,11 +128,10 @@ document units and represent missing measurements explicitly. Preserve unknown
 status values instead of treating them as off or zero. Validate control values
 before sending anything.
 
-Tokio, reqwest, Serde, and thiserror look like a reasonable starting point for
-async execution, HTTP, serialization, and errors. Choose crypto libraries by
-checking them against the test vectors. We'll settle versions, feature flags,
-and the minimum Rust version when we start implementing. No dependencies are
-declared yet.
+Login uses reqwest with rustls for HTTP, Serde for serialization, thiserror for
+errors, and RustCrypto for hashes, HMAC, and AES-CBC. Tokio runs the async examples
+and tests. Exact dependency versions are in `Cargo.lock`. The code has been
+checked with Rust 1.93.1; we haven't set a minimum supported release version yet.
 
 Use separate error types or variants for configuration, authentication,
 transport, HTTP errors, SAIC rejection, malformed responses, decryption failures,
@@ -164,18 +164,19 @@ run concurrently. A sequence of vehicle commands can still finish only partly.
 
 ## Validation and open decisions
 
-Use fixed test inputs for crypto and serialization, a mock HTTP server for
-sessions and events, and sanitized fixtures for missing or unknown data.
+Use fixed test inputs for crypto and serialization, fake exchanges for session
+behavior, and sanitized fixtures for missing or unknown data. We aren't building
+a mock-server integration suite for now; production checks will be manual.
 Use the Python tests as a source of cases, retaining attribution if copied.
-Tests should run without credentials or a real vehicle by default.
+Automated tests must run without credentials or a real vehicle.
 
-Start live testing with login, discovery, and cached reads, and enable it
-explicitly. For wake-ups and controls, choose the vehicle and operation
-deliberately. Record what worked and on which model, without committing personal
-identifiers. Keep the existing application tests as references for the later
-service.
+Only run a production check when the user explicitly requests that specific
+check. Start with login; vehicle reads and controls are separate steps. Record
+what worked and on which model without committing personal identifiers. Keep
+the existing application tests as references for the later service.
 
-We still need to choose the Python reference commit and target account profile.
-Before adding controls, decide which model capabilities to support, the default
-deadlines, and how the API returns outcomes. Publishing also needs a license,
+Login follows the pinned Python revision in [Reference sources](references.md)
+and starts with the MG Europe profile. Before adding controls, decide which
+model capabilities to support, the default deadlines, and how the API returns
+outcomes. Publishing also needs a license,
 minimum Rust version, and release policy.

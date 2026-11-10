@@ -1,0 +1,59 @@
+{
+  "reference": "SAIC-iSmart-API/saic-python-client-ng@8ab0634b292e64f5198d979636e01616ea6af34f",
+  "timestamp_ms": 1735689600123,
+  "requests": [
+    {
+      "username": "unit+tag@example.invalid",
+      "password": "test & café + password",
+      "country_code": null,
+      "form": "grant_type=password&username=unit%2Btag%40example.invalid&password=145833acd4c0bdc54b6db876822bd2eb299df57a&scope=all&deviceId=simulator%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A1735689600%23%23%23com.saicmotor.europecar&deviceType=0&language=EN&loginType=2",
+      "body": "42266dcf8541acac6f3e60510f97def007c4f0e2eec334ccfc2c5e915962902b1e128e28d55d5518213accd1d752d3272166e7c1a994fe7bd8cc12c09dbce37e03c459541d5fb612642d9a20f50eb1216bef6df0b5f0755122b0b3b797f33fed3ee0ad3e1132e3dca3e20c1e4481b1c18cca991551d43a74b8a272b5048545ab8e7b54f7a137a324f58421873fec2312488bb12f8e5543977be84eca5b8ef43ef2fec8b4a5eff3cc9f7ae6b9238befae10680745c2c19280f0f47f5c8195e26518346c176598527d86c85d4272745c81796080d8ac2b4a7857ff2b8dfebf262400ed174b8eb40f6d7adff8fafb87f0653b061686585dfc673a648e00c140322e635796bc2fb3040d321bebb4f4aa40beee27b61234fa0a08d3c44cd56e07784530959c84bfa68163d1d72c6d491b97496150de067b4d300e0679678fa02c72c1e0d908c3a9725e61d04b8fd8e9157876f512825ee9f3d2c86f887432d6701371",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+        "User-Agent": "Europe/2.1.0 (iPad; iOS 18.5; Scale/2.00)",
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip",
+        "REGION": "eu",
+        "APP-SEND-DATE": "1735689600123",
+        "APP-CONTENT-ENCRYPTED": "1",
+        "tenant-id": "459771",
+        "User-Type": "app",
+        "APP-LANGUAGE-TYPE": "en",
+        "APP-VERIFICATION-STRING": "0311070fa1d39c7866bd453f4ed7fb6f84176b52a06d760442d35b233a59f723",
+        "ORIGINAL-CONTENT-TYPE": "application/x-www-form-urlencoded"
+      }
+    },
+    {
+      "username": "470000000",
+      "password": "synthetic phone password",
+      "country_code": "32",
+      "form": "grant_type=password&username=470000000&password=0833307c106e73ce2fa78f8803bc80974da34cc2&scope=all&deviceId=simulator%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A1735689600%23%23%23com.saicmotor.europecar&deviceType=0&language=EN&loginType=1&countryCode=32",
+      "body": "42266dcf8541acac6f3e60510f97def03976488491e40421d9e484b9d73ee1a21cea1dcb0f5acf11d536962b242e26e1b10dc0b4a65b21db6668b7c616561841a3aa518d0c074665615a87992f6cd685edc9c132546e42b6cf17bb30db12bcaa13eb8c6f1d92c5acd47393b919121317d181b8a8fdbc2c5fe25daef390db28f2504b2b5bec25f0864a181d4cabdd70007bd439c3739f787e253f35083fef1c965b0758465340c68fcefd0d7c308e7ebd0c1c0aeaf2123e5491577fa5c1f54ce8f2f1a59ae0d5fc6216ed0c52408b1ed6b87074c81bd3347f1eb5fdd247bea545812a25baeac91daaa165bcc1c96ebf9dd4272973a02d812784f093f7912e7fb1505fdc67f629992801be0ad89c7d12885b33d6db825e2a7045ed7f10abaed449b20b979a459bcb2bede541be493568f4cd696139d25e076c2e4da4383815842797328796b67f15ea8499b39686f6e56430f8d54c718bb883cd9a5a33b5007169",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+        "User-Agent": "Europe/2.1.0 (iPad; iOS 18.5; Scale/2.00)",
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip",
+        "REGION": "eu",
+        "APP-SEND-DATE": "1735689600123",
+        "APP-CONTENT-ENCRYPTED": "1",
+        "tenant-id": "459771",
+        "User-Type": "app",
+        "APP-LANGUAGE-TYPE": "en",
+        "APP-VERIFICATION-STRING": "cef9cdcbe8152655790f42f51a342f61a37e130d434ac837338606f99dcb0e8c",
+        "ORIGINAL-CONTENT-TYPE": "application/x-www-form-urlencoded"
+      }
+    }
+  ],
+  "response": {
+    "plaintext": "{\"code\":0,\"message\":\"success\",\"data\":{\"access_token\":\"synthetic-token\",\"expires_in\":3600,\"user_name\":\"ignored synthetic user\",\"refresh_token\":\"ignored-refresh-token\"}}",
+    "body": "4aeb7f6f263b1c16960a660125853089abf7df758021cd6d8ba8109afce4cf4a05ca85199b61ddbc081f8f35ab256c0b5570ba4781ea1955c6bfc2e80311ca28b1a0710cbb44301250f7938c82908bbdee2533c3290aea20eb76cd35c8ef20dd840554d16ab049d4147b97978de1af29afdf391a164ffff8744bd1fc87cfcd6edea8bf756aaab88e5c52024c60f1ab9c2119a800d572da3945009d866ad1f968b6decaec357e363f4e1f5aadf02bc716",
+    "headers": {
+      "Content-Type": "application/json;charset=utf-8",
+      "APP-CONTENT-ENCRYPTED": "1",
+      "APP-SEND-DATE": "1735689600123",
+      "ORIGINAL-CONTENT-TYPE": "application/json",
+      "APP-VERIFICATION-STRING": "dabf7ce30ef31ad8cec26e63e9077988db0ed21509efbdf875f28d9d4d4d00d5"
+    }
+  }
+}
