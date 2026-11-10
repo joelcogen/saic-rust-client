@@ -78,11 +78,17 @@ complete HTTP exchange. Those checks remain manual.
 
 ## Manual checks
 
-The login example requires `--production` before it reads credentials or sends
-a request. It authenticates once and reports success or a redacted error. It
-never makes a vehicle request. The library itself is a normal client: an
-application that calls `login().await` will send a request without that example's
-command-line flag.
+The [interactive CLI](../examples/cli.rs) reads `.env` from the current directory,
+logs in once, and waits for commands until exit. Starting it is the explicit
+production action; no extra `--production` flag is needed. `--help` exits before
+reading credentials or contacting SAIC. See the [README](../README.md#manual-cli)
+for setup and commands.
+
+The prompt uses the same client throughout. `status` and `logout` are local
+operations; `login` makes another authentication request. The CLI doesn't make
+vehicle requests or automatically renew expired sessions. Its unit tests use a
+fake session and synthetic `.env` contents, so `cargo test` never starts a real
+login.
 
 Only run against production when the user explicitly requests that specific
 check. Available credentials aren't permission to use them. Future vehicle

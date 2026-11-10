@@ -50,11 +50,41 @@ Tests use synthetic data and never contact SAIC or read account credentials.
 After dependencies are downloaded, add `--offline` to Cargo commands to prevent
 registry access too. We don't have a mock-server integration suite.
 
-The [login example](examples/login.rs) is for a manual production check, only
-when you explicitly choose to run it. It requires `--production`, reads
-`SAIC_USERNAME` and `SAIC_PASSWORD` from the environment, and optionally accepts
-`SAIC_PHONE_COUNTRY_CODE`. It doesn't load an environment file or fetch vehicle
-data. Keep account checks separate from vehicle wake-ups and commands.
+## Manual CLI
+
+Copy [.env.example](.env.example) to `.env` in the repository root and fill in
+`SAIC_USERNAME` and `SAIC_PASSWORD`. For a phone account, also set
+`SAIC_PHONE_COUNTRY_CODE`. Single-quote passwords so `$` and `#` stay literal.
+The `.env` file is ignored by Git.
+
+Start the [CLI](examples/cli.rs) from that directory:
+
+```sh
+cargo run --example cli
+```
+
+Starting it logs in to MG Europe, then waits for commands on the same client:
+
+| Command | Action |
+| --- | --- |
+| `help` | Show commands |
+| `status` | Show local session expiry without making a request |
+| `login` | Log in again using the same credentials |
+| `logout` | Forget the local session without contacting SAIC |
+| `exit` or `quit` | Exit; EOF and Ctrl-C also exit |
+
+The CLI reads `.env` from the current directory without searching parent
+directories or loading values into the process environment. It doesn't take
+account credentials directly from shell variables. If startup login fails, it
+exits; a failed interactive `login` leaves the prompt available for another try.
+There are no automatic retries or background requests. Vehicle commands will
+follow as the client gains support for them.
+
+Use `cargo run --example cli -- --help` to see usage without reading `.env` or
+logging in. The old one-shot login example is replaced by this CLI.
+
+The CLI's tests run with `cargo test` using a fake session. They never read your
+`.env` or make requests. Only start the real CLI when you intend to log in.
 
 The web service will handle MQTT if needed, HTTP routes, Notify!, polling, and
 preheating rules.
