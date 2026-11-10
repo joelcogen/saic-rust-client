@@ -1,0 +1,9 @@
+[package]
+name = "saic-client"
+version = "0.1.0"
+edition = "2021"
+description = "An asynchronous Rust client for the SAIC MG iSMART API"
+readme = "README.md"
+publish = false
+
+[dependencies]
