@@ -39,3 +39,62 @@ Synthetic fixtures cover all four payloads and completed, rejected and pending
 responses. Offline exchanges verify exact payloads, same-command continuation,
 retained response details and no secondary controls or status reads, including
 transport failures and timeouts. CLI specs cover dispatch and invalid arguments.
+
+## Target SoC and current limit
+
+Use `Command::set_target_battery_soc(TargetBatterySoc, supported)` or
+`Command::set_charge_current_limit(ChargeCurrentLimit, supported)` with
+`execute_command`. Supply `supported` from the caller's model capability
+information for that setting. False rejects locally; unknown support must not
+be treated as true. The client does not discover capabilities or fetch existing
+settings. These constructors do not imply that every model supports every value.
+
+| Target percentage | Protocol code |
+| --- | --- |
+| 40 | 1 |
+| 50 | 2 |
+| 60 | 3 |
+| 70 | 4 |
+| 80 | 5 |
+| 90 | 6 |
+| 100 | 7 |
+
+`TargetBatterySoc::from_percentage` rejects all other percentages, without
+rounding. Parse `ChargeCurrentLimit` from `6A`, `8A`, `16A` or `MAX`
+(case-insensitive); their protocol codes are 1, 2, 3 and 4 respectively.
+`MAX` means the vehicle maximum, not a fixed amperage.
+
+Both commands POST to `/vehicle/charging/setting`. Target updates set
+`onBdChrgTrgtSOCReq` and send `altngChrgCrntReq: 0`; current updates set
+`altngChrgCrntReq` and send `onBdChrgTrgtSOCReq: 0`. Both send
+`tboxV2XSpSOCReq: 0`. Zero is the pinned client's **ignore** code: it preserves
+that setting rather than replacing it with a default. No companion value is
+required for these supported partial updates. To change both settings, submit
+the two commands independently and choose when to refresh. All-ignore payloads
+are settings reads and are rejected by command transport.
+
+CLI examples (synthetic VIN; do not execute against production as a test):
+
+```text
+charge-target SYNTHETICVIN 80 supported
+charge-current SYNTHETICVIN 8A supported
+```
+
+The final argument is mandatory caller-supplied capability information:
+`supported` or `unsupported`. Unsupported settings reject without sending.
+Neither command reads status before, after or on failure. Continuation uses
+only the same settings payload and event ID. Results have the same completion
+and unknown-outcome semantics as other commands.
+
+Mappings and ignore semantics follow `TargetBatteryCode`,
+`ChargeCurrentLimitCode` and `set_target_battery_soc` in the pinned Python
+client linked above. Gateway handlers `drivetrain_soc_target.py` and
+`drivetrain_chargecurrent_limit.py` at the recorded gateway revision confirm
+mapping and target capability checks. Cached companion values and refreshes
+from the gateway are application behavior; the supported ignore codes let this
+client preserve companions without cached state.
+
+`charge_settings.json` covers every supported mapping, unchanged companion
+fields and invalid user values. Offline transport specs exercise each payload
+through completion, rejection, continuation, transport failure and timeout;
+CLI specs check capability rejection, required arguments and absence of reads.

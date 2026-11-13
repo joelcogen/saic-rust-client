@@ -1,0 +1,122 @@
+{
+  "actions": [
+    {
+      "cli": "charge-target",
+      "value": "40",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 1,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-target",
+      "value": "50",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 2,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-target",
+      "value": "60",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 3,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-target",
+      "value": "70",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 4,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-target",
+      "value": "80",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 5,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-target",
+      "value": "90",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 6,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-target",
+      "value": "100",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 7,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-current",
+      "value": "6A",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 1,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-current",
+      "value": "8A",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 2,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-current",
+      "value": "16A",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 3,
+        "tboxV2XSpSOCReq": 0
+      }
+    },
+    {
+      "cli": "charge-current",
+      "value": "MAX",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 4,
+        "tboxV2XSpSOCReq": 0
+      }
+    }
+  ],
+  "invalid_targets": [
+    -1,
+    0,
+    39,
+    41,
+    55,
+    99,
+    101,
+    255
+  ],
+  "invalid_limits": [
+    "",
+    "0",
+    "6",
+    "7A",
+    "10A",
+    "32A",
+    "IGNORE"
+  ]
+}

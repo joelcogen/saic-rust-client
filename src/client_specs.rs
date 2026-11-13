@@ -823,13 +823,34 @@ async fn charging_actions_preserve_details_and_only_continue_the_same_control() 
     use sha2::{Digest, Sha256};
     let fixtures: serde_json::Value =
         serde_json::from_str(include_str!("../tests/fixtures/charging.json")).unwrap();
-    let commands = [
+    let mut commands = vec![
         crate::Command::control_charging(false),
         crate::Command::control_charging(true),
         crate::Command::control_charging_port_lock(false),
         crate::Command::control_charging_port_lock(true),
     ];
-    for (command, case) in commands.iter().zip(fixtures["actions"].as_array().unwrap()) {
+    let settings: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/charge_settings.json")).unwrap();
+    let mut cases = fixtures["actions"].as_array().unwrap().clone();
+    for case in settings["actions"].as_array().unwrap() {
+        let value = case["value"].as_str().unwrap();
+        commands.push(if case["cli"] == "charge-target" {
+            crate::Command::set_target_battery_soc(
+                crate::TargetBatterySoc::from_percentage(value.parse().unwrap()).unwrap(),
+                true,
+            )
+            .unwrap()
+        } else {
+            crate::Command::set_charge_current_limit(value.parse().unwrap(), true).unwrap()
+        });
+        cases.push(case.clone());
+    }
+    for (command, case) in commands.iter().zip(&cases) {
+        let path = if case["cli"] == "charge-target" || case["cli"] == "charge-current" {
+            "/vehicle/charging/setting"
+        } else {
+            "/vehicle/charging/control"
+        };
         let mut expected = case["payload"].clone();
         expected["vin"] = hex::encode(Sha256::digest("SYNTHETICVIN")).into();
         assert_eq!(
@@ -857,7 +878,7 @@ async fn charging_actions_preserve_details_and_only_continue_the_same_control() 
                     |request| {
                         calls += 1;
                         assert_eq!(request.method(), "POST");
-                        assert_eq!(request.url().path(), "/api.app/v1/vehicle/charging/control");
+                        assert_eq!(request.url().path(), format!("/api.app/v1{path}"));
                         assert_eq!(
                             request.headers()["event-id"],
                             if calls == 1 {
@@ -867,7 +888,7 @@ async fn charging_actions_preserve_details_and_only_continue_the_same_control() 
                             }
                         );
                         let (body, _) = protocol::encrypt_authenticated(
-                            "/vehicle/charging/control",
+                            path,
                             request.headers()["app-send-date"].to_str().unwrap(),
                             &tenant,
                             request.headers()["blade-auth"].to_str().unwrap(),

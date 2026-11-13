@@ -76,3 +76,11 @@ See [sources and settings](../../docs/find-car.md).
 The generator records the pinned Python and gateway revisions. It covers four
 independent actions plus synthetic completed, rejected and pending responses.
 No credentials, vehicle data or production captures are used.
+
+## Charge target and current limit
+
+Regenerate `charge_settings.json` with
+`python3 tests/fixtures/generate_charge_settings.py` (standard library, offline).
+The pinned current-client mappings cover all seven target percentages and four
+current limits, including ignore codes that preserve companion settings and
+invalid input examples. See [charging documentation](../../docs/charging.md).

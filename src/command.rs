@@ -25,6 +25,14 @@ pub enum Command {
         #[serde(rename = "rvcParams")]
         parameters: Vec<ControlParameter>,
     },
+    ChargingSettings {
+        #[serde(rename = "onBdChrgTrgtSOCReq")]
+        target_soc: u8,
+        #[serde(rename = "altngChrgCrntReq")]
+        current_limit: u8,
+        #[serde(rename = "tboxV2XSpSOCReq")]
+        v2x_soc: u8,
+    },
     Charging {
         #[serde(rename = "chrgCtrlReq")]
         charging: u8,
@@ -39,12 +47,27 @@ impl Command {
     pub(crate) fn path(&self) -> &'static str {
         match self {
             Self::Vehicle { .. } => "/vehicle/control",
+            Self::ChargingSettings { .. } => "/vehicle/charging/setting",
             Self::Charging { .. } => "/vehicle/charging/control",
         }
     }
     pub(crate) fn body(&self, vin: &str) -> Result<String, Error> {
         if vin.trim().is_empty() {
             return Err(Error::Configuration("VIN must not be empty"));
+        }
+        if let Self::ChargingSettings {
+            target_soc,
+            current_limit,
+            v2x_soc,
+        } = self
+        {
+            if *target_soc > 7
+                || *current_limit > 4
+                || *v2x_soc != 0
+                || (*target_soc == 0 && *current_limit == 0)
+            {
+                return Err(Error::Configuration("invalid charging settings command"));
+            }
         }
         if let Self::Vehicle {
             request_type,

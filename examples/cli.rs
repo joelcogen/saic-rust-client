@@ -7,8 +7,8 @@ use std::{
 };
 
 use saic_client::{
-    ClientConfig, Command, CommandOutcome, Credentials, Error, FindCarMode, LockAction, SaicClient,
-    TailgateAction, TemperatureProfile, VehicleLockId,
+    ChargeCurrentLimit, ClientConfig, Command, CommandOutcome, Credentials, Error, FindCarMode,
+    LockAction, SaicClient, TailgateAction, TargetBatterySoc, TemperatureProfile, VehicleLockId,
 };
 
 const HELP: &str = "Commands:
@@ -18,6 +18,8 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  charge-target VIN PERCENT supported|unsupported  Set target; preserve current limit
+  charge-current VIN 6A|8A|16A|MAX supported|unsupported  Set limit; preserve target
   charging-start VIN          Start charging
   charging-stop VIN           Stop charging without unlocking cable
   cable-lock VIN              Lock charging cable
@@ -430,17 +432,40 @@ fn parse_find_car(line: &str) -> Result<(&str, Command), &'static str> {
 fn is_charging_control(line: &str) -> bool {
     matches!(
         line.split_whitespace().next(),
-        Some("charging-start" | "charging-stop" | "cable-lock" | "cable-unlock")
+        Some(
+            "charge-target"
+                | "charge-current"
+                | "charging-start"
+                | "charging-stop"
+                | "cable-lock"
+                | "cable-unlock"
+        )
     )
 }
 
 fn parse_charging_control(line: &str) -> Result<(&str, Command), &'static str> {
     let parts: Vec<_> = line.split_whitespace().collect();
     match parts.as_slice() {
+        [name @ ("charge-target" | "charge-current"), vin, value, capability] => {
+            let supported = match *capability {
+                "supported" => true,
+                "unsupported" => false,
+                _ => return Err("Capability must be supported or unsupported; unknown support is not supported"),
+            };
+            let command = if *name == "charge-target" {
+                let target = value.parse::<i16>().ok().and_then(|v| TargetBatterySoc::from_percentage(v).ok())
+                    .ok_or("Target must be 40, 50, 60, 70, 80, 90 or 100 percent")?;
+                Command::set_target_battery_soc(target, supported)
+            } else {
+                let limit = value.parse::<ChargeCurrentLimit>().map_err(|_| "Limit must be 6A, 8A, 16A or MAX")?;
+                Command::set_charge_current_limit(limit, supported)
+            }.map_err(|_| "Setting is unsupported by the caller-supplied vehicle capability")?;
+            Ok((vin, command))
+        }
         ["charging-start", vin] => Ok((vin, Command::control_charging(false))),
         ["charging-stop", vin] => Ok((vin, Command::control_charging(true))),
         ["cable-lock", vin] => Ok((vin, Command::control_charging_port_lock(false))),
         ["cable-unlock", vin] => Ok((vin, Command::control_charging_port_lock(true))),
-        _ => Err("Expected charging-start|charging-stop|cable-lock|cable-unlock VIN"),
+        _ => Err("Expected charge-target|charge-current VIN VALUE supported|unsupported, or charging-start|charging-stop|cable-lock|cable-unlock VIN"),
     }
 }

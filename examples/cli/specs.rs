@@ -584,3 +584,76 @@ async fn invalid_charging_control_arguments_never_send() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn charge_settings_preserve_companions_and_never_read_even_on_failure() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/charge_settings.json")).unwrap();
+    let cases = fixture["actions"].as_array().unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let input: String = cases
+            .iter()
+            .map(|case| {
+                let name = case["cli"].as_str().unwrap();
+                assert!(HELP.contains(name));
+                format!(
+                    "{name} SYNTHETICVIN {} supported\n",
+                    case["value"].as_str().unwrap()
+                )
+            })
+            .collect();
+        run_session(&mut client, input.as_bytes(), &mut Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(client.commands, cases.len());
+        assert!(client.reads.is_empty());
+        for (mut payload, case) in client.payloads.into_iter().zip(cases) {
+            assert_eq!(
+                payload.as_object_mut().unwrap().remove("kind"),
+                Some("ChargingSettings".into())
+            );
+            assert_eq!(payload, case["payload"]);
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_charge_settings_never_dispatch() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/charge_settings.json")).unwrap();
+    let mut lines = Vec::new();
+    for value in fixture["invalid_targets"].as_array().unwrap() {
+        lines.push(format!("charge-target vin {value} supported"));
+    }
+    for value in fixture["invalid_limits"].as_array().unwrap() {
+        lines.push(format!(
+            "charge-current vin {} supported",
+            value.as_str().unwrap()
+        ));
+    }
+    for (name, value) in [("charge-target", "80"), ("charge-current", "8A")] {
+        for args in [
+            String::new(),
+            "vin".into(),
+            format!("vin {value}"),
+            format!("vin {value} unsupported"),
+            format!("vin {value} unknown"),
+            format!("vin {value} supported extra"),
+        ] {
+            lines.push(format!("{name} {args}"));
+        }
+    }
+    for line in &lines {
+        assert!(parse_charging_control(line).is_err(), "{line}");
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, lines.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}
