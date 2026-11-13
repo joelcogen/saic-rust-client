@@ -55,3 +55,10 @@ and steering-wheel heating, including marker presence and absence. Sources and
 the intentional steering-wheel difference from the pinned client are recorded
 in [climate documentation](../../docs/climate.md) and the generator. All inputs
 are synthetic; expected payloads are independent of the Rust implementation.
+
+## Locks and tailgate
+
+Regenerate `locks.json` with `python3 tests/fixtures/generate_locks.py`
+(standard library only, offline). The five synthetic payloads distinguish lock,
+door unlock, latch release and powered open/close, including null parameters
+and marker presence/absence. See [sources and semantics](../../docs/locks.md).

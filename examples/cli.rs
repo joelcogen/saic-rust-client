@@ -7,7 +7,8 @@ use std::{
 };
 
 use saic_client::{
-    ClientConfig, Command, CommandOutcome, Credentials, Error, SaicClient, TemperatureProfile,
+    ClientConfig, Command, CommandOutcome, Credentials, Error, LockAction, SaicClient,
+    TailgateAction, TemperatureProfile, VehicleLockId,
 };
 
 const HELP: &str = "Commands:
@@ -17,6 +18,12 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  lock VIN                    Request vehicle locking
+  unlock VIN                  Request door unlocking
+  tailgate-open VIN           Release tailgate latch
+  tailgate-control VIN open|close  Request powered tailgate movement
+  locks-control VIN lock|unlock [doors|tailgate]  Target required only for unlock
+  Completion is API completion, not proof of physical position
   ac-start VIN PROFILE CELSIUS  Start AC at target temperature
   ac-stop VIN                  Stop AC
   ac-blowing VIN               Start ventilation only
@@ -199,6 +206,16 @@ async fn run_session(
                     Err(error) => writeln!(output, "{error}")?,
                 }
             }
+            text if is_lock_command(text) => match parse_locks(text) {
+                Ok((vin, command)) => match client.command(vin, &command).await {
+                    Ok(outcome) => writeln!(
+                        output,
+                        "API command result (physical position unverified): {outcome:?}"
+                    )?,
+                    Err(error) => writeln!(output, "Command failed: {error}")?,
+                },
+                Err(error) => writeln!(output, "{error}")?,
+            },
             text if is_climate_command(text) => match parse_climate(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
                     Ok(outcome) => writeln!(output, "{outcome:?}")?,
@@ -342,6 +359,37 @@ fn parse_climate(line: &str) -> Result<(&str, Command), &'static str> {
                 .map_err(|_| "Fan and temperature index must be 0..255")?
         }
         _ => return Err("Invalid climate arguments. Type help for commands."),
+    };
+    Ok((parts[1], command))
+}
+
+fn is_lock_command(line: &str) -> bool {
+    matches!(
+        line.split_whitespace().next(),
+        Some("lock" | "unlock" | "tailgate-open" | "tailgate-control" | "locks-control")
+    )
+}
+
+fn parse_locks(line: &str) -> Result<(&str, Command), &'static str> {
+    let parts: Vec<_> = line.split_whitespace().collect();
+    let command = match parts.as_slice() {
+        ["lock", _] => Command::lock_vehicle(),
+        ["unlock", _] => Command::unlock_vehicle(),
+        ["tailgate-open", _] => Command::open_tailgate(),
+        ["tailgate-control", _, "open"] => Command::control_tailgate(TailgateAction::Open),
+        ["tailgate-control", _, "close"] => Command::control_tailgate(TailgateAction::Close),
+        ["locks-control", _, "lock"] => Command::control_vehicle_locks(LockAction::Lock, None)
+            .map_err(|_| "Invalid lock action")?,
+        ["locks-control", _, "unlock", target] => {
+            let target = match *target {
+                "doors" => VehicleLockId::Doors,
+                "tailgate" => VehicleLockId::Tailgate,
+                _ => return Err("Expected doors or tailgate"),
+            };
+            Command::control_vehicle_locks(LockAction::Unlock, Some(target))
+                .map_err(|_| "Invalid unlock action")?
+        }
+        _ => return Err("Invalid lock/tailgate arguments. Type help for commands."),
     };
     Ok((parts[1], command))
 }

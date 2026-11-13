@@ -75,6 +75,11 @@ impl Command {
         let mut body = serde_json::to_value(self).expect("command serializes");
         let map = body.as_object_mut().expect("command is an object");
         map.remove("kind");
+        // The reference lock request has null parameters, not an empty array.
+        if matches!(self, Self::Vehicle { request_type, parameters } if request_type == "1" && parameters.is_empty())
+        {
+            map.insert("rvcParams".into(), Value::Null);
+        }
         map.insert(
             "vin".into(),
             Value::String(hex::encode(Sha256::digest(vin))),
@@ -106,6 +111,7 @@ pub enum UnknownReason {
 }
 #[derive(Debug)]
 pub enum CommandState {
+    /// The API completed the command; this does not prove physical position.
     Completed,
     Rejected,
     InvalidSession,

@@ -25,6 +25,7 @@ mod climate;
 mod command;
 mod config;
 mod error;
+mod locks;
 pub mod models;
 mod protocol;
 mod reads;
@@ -36,6 +37,7 @@ pub use command::{
 };
 pub use config::{ClientConfig, Credentials};
 pub use error::{ApiFailure, Error};
+pub use locks::{LockAction, TailgateAction, VehicleLockId};
 
 #[cfg(test)]
 mod test_support;

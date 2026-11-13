@@ -1,0 +1,91 @@
+[
+  {
+    "cli": "lock",
+    "payload": {
+      "rvcReqType": "1",
+      "rvcParams": null
+    }
+  },
+  {
+    "cli": "unlock",
+    "payload": {
+      "rvcReqType": "2",
+      "rvcParams": [
+        {
+          "paramId": 4,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 5,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 6,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 7,
+          "paramValue": "Aw=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "cli": "tailgate-open",
+    "payload": {
+      "rvcReqType": "2",
+      "rvcParams": [
+        {
+          "paramId": 4,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 5,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 6,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 7,
+          "paramValue": "Ag=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "cli": "tailgate-control",
+    "action": "open",
+    "payload": {
+      "rvcReqType": "9",
+      "rvcParams": [
+        {
+          "paramId": 31,
+          "paramValue": "AQ=="
+        }
+      ]
+    }
+  },
+  {
+    "cli": "tailgate-control",
+    "action": "close",
+    "payload": {
+      "rvcReqType": "9",
+      "rvcParams": [
+        {
+          "paramId": 31,
+          "paramValue": "Ag=="
+        }
+      ]
+    }
+  }
+]

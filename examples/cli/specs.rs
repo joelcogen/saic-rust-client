@@ -377,3 +377,80 @@ async fn invalid_heater_arguments_never_send() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn lock_variants_dispatch_without_reads_even_on_failure() {
+    let fixtures: Vec<serde_json::Value> =
+        serde_json::from_str(include_str!("../../tests/fixtures/locks.json")).unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let mut input = String::new();
+        for case in &fixtures {
+            let name = case["cli"].as_str().unwrap();
+            assert!(HELP.contains(name));
+            input.push_str(&format!(
+                "{name} SYNTHETICVIN {}\n",
+                case["action"].as_str().unwrap_or("")
+            ));
+        }
+        input.push_str("locks-control SYNTHETICVIN lock\nlocks-control SYNTHETICVIN unlock doors\nlocks-control SYNTHETICVIN unlock tailgate\n");
+        let mut output = Vec::new();
+        run_session(&mut client, input.as_bytes(), &mut output)
+            .await
+            .unwrap();
+        assert_eq!(client.commands, 8);
+        assert_eq!(client.logins, 1);
+        assert!(client.reads.is_empty());
+        assert_eq!(client.payloads[0], client.payloads[5]);
+        assert_eq!(client.payloads[1], client.payloads[6]);
+        assert_eq!(client.payloads[2], client.payloads[7]);
+        for (mut actual, case) in client.payloads.into_iter().zip(&fixtures) {
+            actual.as_object_mut().unwrap().remove("kind");
+            // Command stores an empty list; the wire body emits null for locking.
+            if actual["rvcReqType"] == "1" {
+                assert_eq!(actual["rvcParams"], serde_json::json!([]));
+                actual["rvcParams"] = serde_json::Value::Null;
+            }
+            assert_eq!(actual, case["payload"]);
+        }
+        let text = String::from_utf8(output).unwrap();
+        if fail_commands {
+            assert_eq!(text.matches("Command failed").count(), 8);
+        } else {
+            assert_eq!(text.matches("physical position unverified").count(), 8);
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_lock_and_tailgate_arguments_never_send() {
+    let invalid = [
+        "lock",
+        "lock vin doors",
+        "unlock",
+        "unlock vin tailgate",
+        "tailgate-open",
+        "tailgate-open vin close",
+        "tailgate-control vin",
+        "tailgate-control vin stop",
+        "tailgate-control vin 1",
+        "tailgate-control vin open extra",
+        "locks-control vin unlock",
+        "locks-control vin lock doors",
+        "locks-control vin lock tailgate",
+        "locks-control vin unlock all",
+        "locks-control vin unlock doors extra",
+    ];
+    for line in invalid {
+        assert!(parse_locks(line).is_err(), "{line}");
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, invalid.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}

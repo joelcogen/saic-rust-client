@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport, cabin climate, rear-window and steering-wheel heating controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate, rear-window and steering-wheel heating, door locks and tailgate controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -30,6 +30,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 ## Documentation
 
 - [Vehicle reads](docs/reads.md): cached/live separation, typed data and capabilities.
+- [Door locks and tailgate](docs/locks.md): latch release, powered movement and API completion.
 - [Cabin climate](docs/climate.md): AC, ventilation, front defrost and explicit temperatures.
 - [Command transport](docs/commands.md): envelopes, deadlines and unknown outcomes.
 - [Login specification](docs/login.md): API behavior, failure cases, and tests.
@@ -75,6 +76,11 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `login` | Log in again using the same credentials |
 | `vehicle-command VIN JSON` | Submit an explicit vehicle control payload |
 | `charging-command VIN JSON` | Submit an explicit charging control payload |
+| `lock VIN` | Request vehicle locking |
+| `unlock VIN` | Request door unlocking |
+| `tailgate-open VIN` | Release tailgate latch |
+| `tailgate-control VIN open/close` | Request powered tailgate movement on supported models |
+| `locks-control VIN lock/unlock [doors/tailgate]` | Target required only for unlock |
 | `ac-start VIN PROFILE CELSIUS` | Start AC at the supplied target |
 | `ac-stop VIN` | Stop AC |
 | `ac-blowing VIN` | Start ventilation only |
@@ -93,6 +99,9 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `battery-heating-schedule VIN` | Read the stored battery-heating schedule |
 | `logout` | Forget the local session without contacting SAIC |
 | `exit` or `quit` | Exit; EOF and Ctrl-C also exit |
+
+Lock and tailgate completion means API completion, not verified physical position.
+Latch release and powered movement are distinct; see [lock semantics](docs/locks.md).
 
 Climate profiles are `eh32` (17–31 °C), `mzs3e` (16–31 °C), and `standard`
 (16–28 °C). Select one from known vehicle context; targets are whole degrees.

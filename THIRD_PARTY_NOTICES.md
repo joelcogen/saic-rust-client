@@ -16,6 +16,10 @@ Read operations and wire models in `src/reads.rs`, `src/models.rs`, and
 particularly `api/vehicle/schema.py`, `api/vehicle_charging/schema.py`,
 `api/schema.py` and `net/crypto.py`.
 
+Lock and tailgate builders in `src/locks.rs` and `tests/fixtures/locks.json`
+follow the same pinned revision, particularly `api/vehicle/locks/__init__.py`,
+`api/vehicle/locks/schema.py` and `api/vehicle/schema.py`.
+
 The upstream license follows.
 
 MIT License

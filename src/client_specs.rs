@@ -755,7 +755,7 @@ async fn read_deadlines_and_invalid_sessions_do_not_replay() {
 }
 
 #[tokio::test(start_paused = true)]
-async fn climate_modes_only_continue_the_same_command_on_success_or_failure() {
+async fn controls_only_continue_the_same_command_on_success_or_failure() {
     use crate::{Command, TemperatureProfile};
     for command in [
         Command::start_ac(TemperatureProfile::Eh32, 17).unwrap(),
@@ -763,6 +763,11 @@ async fn climate_modes_only_continue_the_same_command_on_success_or_failure() {
         Command::set_rear_window_heater(true),
         Command::set_steering_wheel_heater(false),
         Command::set_steering_wheel_heater(true),
+        Command::lock_vehicle(),
+        Command::unlock_vehicle(),
+        Command::open_tailgate(),
+        Command::control_tailgate(crate::TailgateAction::Open),
+        Command::control_tailgate(crate::TailgateAction::Close),
         Command::stop_ac(),
         Command::start_ac_blowing(),
         Command::start_front_defrost(),
