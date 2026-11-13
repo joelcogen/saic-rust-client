@@ -1,0 +1,205 @@
+{
+  "lists": [
+    {
+      "group": "alarm",
+      "page": 1,
+      "size": 2,
+      "path": "/message/list?pageNum=1&pageSize=2&messageGroup=ALARM",
+      "response": {
+        "messages": [
+          {
+            "messageId": "001-synthetic",
+            "readStatus": 0,
+            "messageTime": "13/11/2026 12:00:00",
+            "vin": "synthetic-vin"
+          },
+          {
+            "messageId": 9007199254740993,
+            "readStatus": 9
+          }
+        ],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "alarm",
+      "page": 2,
+      "size": 2,
+      "path": "/message/list?pageNum=2&pageSize=2&messageGroup=ALARM",
+      "response": {
+        "messages": [
+          {}
+        ],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "alarm",
+      "page": 3,
+      "size": 2,
+      "path": "/message/list?pageNum=3&pageSize=2&messageGroup=ALARM",
+      "response": {
+        "messages": [],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "command",
+      "page": 1,
+      "size": 2,
+      "path": "/message/list?pageNum=1&pageSize=2&messageGroup=COMMAND",
+      "response": {
+        "messages": [
+          {
+            "messageId": "001-synthetic",
+            "readStatus": 0,
+            "messageTime": "13/11/2026 12:00:00",
+            "vin": "synthetic-vin"
+          },
+          {
+            "messageId": 9007199254740993,
+            "readStatus": 9
+          }
+        ],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "command",
+      "page": 2,
+      "size": 2,
+      "path": "/message/list?pageNum=2&pageSize=2&messageGroup=COMMAND",
+      "response": {
+        "messages": [
+          {}
+        ],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "command",
+      "page": 3,
+      "size": 2,
+      "path": "/message/list?pageNum=3&pageSize=2&messageGroup=COMMAND",
+      "response": {
+        "messages": [],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "news",
+      "page": 1,
+      "size": 2,
+      "path": "/message/list?pageNum=1&pageSize=2&messageGroup=NEWS",
+      "response": {
+        "messages": [
+          {
+            "messageId": "001-synthetic",
+            "readStatus": 0,
+            "messageTime": "13/11/2026 12:00:00",
+            "vin": "synthetic-vin"
+          },
+          {
+            "messageId": 9007199254740993,
+            "readStatus": 9
+          }
+        ],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "news",
+      "page": 2,
+      "size": 2,
+      "path": "/message/list?pageNum=2&pageSize=2&messageGroup=NEWS",
+      "response": {
+        "messages": [
+          {}
+        ],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    },
+    {
+      "group": "news",
+      "page": 3,
+      "size": 2,
+      "path": "/message/list?pageNum=3&pageSize=2&messageGroup=NEWS",
+      "response": {
+        "messages": [],
+        "recordsNumber": 3,
+        "totalNumber": 3
+      }
+    }
+  ],
+  "actions": [
+    {
+      "body": {
+        "actionType": "READ",
+        "messageId": "001-synthetic"
+      }
+    },
+    {
+      "body": {
+        "actionType": "READ",
+        "messageId": 9007199254740993
+      }
+    },
+    {
+      "body": {
+        "actionType": "DELETE",
+        "messageId": "001-synthetic"
+      }
+    },
+    {
+      "body": {
+        "actionType": "DELETE",
+        "messageId": 9007199254740993
+      }
+    },
+    {
+      "body": {
+        "actionType": "DELETE_ALARM"
+      }
+    },
+    {
+      "body": {
+        "actionType": "DELETE_COMMAND"
+      }
+    },
+    {
+      "body": {
+        "actionType": "DELETE_NEWS"
+      }
+    }
+  ],
+  "unread": {
+    "alarmNumber": 2,
+    "commandNumber": 3,
+    "newsNumber": 0,
+    "totalNumber": 5
+  },
+  "empty": [
+    null,
+    {},
+    {
+      "messages": null
+    },
+    {
+      "messages": []
+    }
+  ],
+  "reply_codes": [
+    0,
+    1,
+    500,
+    401
+  ]
+}

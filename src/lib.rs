@@ -30,6 +30,7 @@ mod config;
 mod error;
 mod find_car;
 mod locks;
+mod message;
 pub mod models;
 mod protocol;
 mod reads;
@@ -46,6 +47,7 @@ pub use config::{ClientConfig, Credentials};
 pub use error::{ApiFailure, Error};
 pub use find_car::FindCarMode;
 pub use locks::{LockAction, TailgateAction, VehicleLockId};
+pub use message::{MessageAction, MessageGroup, MessageId};
 pub use windows::{DoorWindowsAction, VehicleWindowId};
 
 #[cfg(test)]

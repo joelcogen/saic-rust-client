@@ -749,3 +749,45 @@ impl fmt::Debug for AlarmSwitchResp {
         f.debug_struct("AlarmSwitchResp").finish_non_exhaustive()
     }
 }
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MessageEntity {
+    pub content: Option<String>,
+    pub content_id: Option<String>,
+    pub content_id_list: Option<Vec<Value>>,
+    pub create_time: Option<i64>,
+    pub message_id: Option<crate::MessageId>,
+    pub message_time: Option<String>,
+    pub message_type: Option<String>,
+    pub read_status: Option<i64>,
+    pub sender: Option<String>,
+    pub show_check_button: Option<bool>,
+    pub title: Option<String>,
+    pub vin: Option<String>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
+}
+impl fmt::Debug for MessageEntity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MessageEntity").finish_non_exhaustive()
+    }
+}
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MessageResp {
+    pub alarm_number: Option<i64>,
+    pub command_number: Option<i64>,
+    pub messages: Option<Vec<MessageEntity>>,
+    pub news_number: Option<i64>,
+    pub records_number: Option<i64>,
+    pub total_number: Option<i64>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
+}
+impl fmt::Debug for MessageResp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MessageResp").finish_non_exhaustive()
+    }
+}

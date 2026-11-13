@@ -129,3 +129,7 @@ It uses synthetic values and the current alarm API/schema at client revision
 explicit enable/disable flags, unknown/missing read data and invalid writes.
 Zero and mixed flags extend the reference enable-only helper using its current
 schema; no live validation is claimed. See [alarm semantics](../../docs/alarms.md).
+
+`message.json` contains synthetic message pages, string/integer IDs, unread counts,
+and typed status actions from the current message API. Regenerate offline with
+`python3 tests/fixtures/generate_message.py`. No account data is included.

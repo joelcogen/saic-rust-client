@@ -1215,3 +1215,172 @@ async fn alarm_set_is_a_single_put_even_on_failure_or_pending() {
         }
     }
 }
+
+#[tokio::test]
+async fn messages_use_exact_single_requests_for_pages_counts_and_actions() {
+    use crate::{MessageAction, MessageGroup, MessageId};
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/message.json")).unwrap();
+    let mut cases = Vec::new();
+    for case in fixture["lists"].as_array().unwrap() {
+        let op = crate::message::list_operation(
+            case["group"].as_str().unwrap().parse().unwrap(),
+            case["page"].as_u64().unwrap() as u32,
+            2,
+        )
+        .unwrap();
+        assert_eq!(op.path, case["path"].as_str().unwrap());
+        cases.push((op, case["response"].clone(), false));
+    }
+    assert_eq!(
+        crate::message::unread_operation().path,
+        "/message/unreadCount"
+    );
+    cases.push((
+        crate::message::unread_operation(),
+        fixture["unread"].clone(),
+        false,
+    ));
+    for empty in fixture["empty"].as_array().unwrap() {
+        cases.push((
+            crate::message::list_operation(MessageGroup::Alarm, 1, 1).unwrap(),
+            empty.clone(),
+            false,
+        ));
+    }
+    for case in fixture["actions"].as_array().unwrap() {
+        let body = &case["body"];
+        let action = match body["actionType"].as_str().unwrap() {
+            "READ" => MessageAction::Read(
+                serde_json::from_value::<MessageId>(body["messageId"].clone()).unwrap(),
+            ),
+            "DELETE" => MessageAction::Delete(
+                serde_json::from_value::<MessageId>(body["messageId"].clone()).unwrap(),
+            ),
+            group => MessageAction::DeleteAll(
+                group
+                    .trim_start_matches("DELETE_")
+                    .to_lowercase()
+                    .parse()
+                    .unwrap(),
+            ),
+        };
+        let op = action.operation().unwrap();
+        assert_eq!(op.path, "/message/status");
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&op.body).unwrap(),
+            *body
+        );
+        cases.push((op, serde_json::Value::Null, true));
+    }
+    for (op, data, mutation) in cases {
+        for code in fixture["reply_codes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_i64().unwrap())
+            .chain([-1, -2])
+        {
+            let mut client = authenticated().await;
+            let tenant = client.config.tenant_id.clone();
+            let mut calls = 0;
+            let mut outcome = client
+                .operation_with(&op, Default::default(), std::future::pending(), |request| {
+                    calls += 1;
+                    assert_eq!(request.method(), if mutation { "PUT" } else { "GET" });
+                    assert_eq!(
+                        request.url().as_str(),
+                        format!("https://example.invalid/api.app/v1{}", op.path)
+                    );
+                    assert!(!request.headers().contains_key("event-id"));
+                    if mutation {
+                        let (body, _) = protocol::encrypt_authenticated(
+                            "/message/status",
+                            request.headers()["app-send-date"].to_str().unwrap(),
+                            &tenant,
+                            request.headers()["blade-auth"].to_str().unwrap(),
+                            "application/json",
+                            &op.body,
+                        );
+                        assert_eq!(request.body().unwrap().as_bytes().unwrap(), body.as_bytes());
+                    } else {
+                        assert!(request.body().is_none());
+                    }
+                    let result = match code {
+                        -1 => Err(Error::Transport),
+                        -2 => Err(Error::Timeout),
+                        _ => {
+                            let mut r = reply(
+                                code,
+                                if code == 1 {
+                                    Some("synthetic-event")
+                                } else {
+                                    None
+                                },
+                                false,
+                            );
+                            r.body = Zeroizing::new(
+                                serde_json::json!({"code":code,"data":data})
+                                    .to_string()
+                                    .into_bytes(),
+                            );
+                            Ok(r)
+                        }
+                    };
+                    async { result }
+                })
+                .await
+                .unwrap();
+            assert_eq!(calls, 1);
+            match code {
+                0 => assert!(matches!(outcome.state, crate::CommandState::Completed)),
+                401 => assert!(matches!(outcome.state, crate::CommandState::InvalidSession)),
+                500 => assert!(matches!(outcome.state, crate::CommandState::Rejected)),
+                _ => assert!(matches!(outcome.state, crate::CommandState::Unknown(_))),
+            }
+            if !mutation {
+                outcome.data.get_or_insert(serde_json::Value::Null);
+                let result = SaicClient::read_result::<Option<crate::models::MessageResp>>(outcome);
+                assert_eq!(result.is_ok(), code == 0);
+                if code == 0 {
+                    let result = result.unwrap();
+                    assert_eq!(result.is_none(), data.is_null());
+                    if let Some(result) = result {
+                        let encoded = serde_json::to_value(&result).unwrap();
+                        for (key, value) in data.as_object().unwrap() {
+                            if key == "messages" && value.is_array() {
+                                let actual = encoded[key].as_array().unwrap();
+                                let expected = value.as_array().unwrap();
+                                assert_eq!(actual.len(), expected.len());
+                                for (a, e) in actual.iter().zip(expected) {
+                                    for (k, v) in e.as_object().unwrap() {
+                                        assert_eq!(&a[k], v);
+                                    }
+                                }
+                            } else {
+                                assert_eq!(&encoded[key], value);
+                            }
+                        }
+                        assert!(!format!("{result:?}").contains("synthetic"));
+                    }
+                }
+            }
+        }
+    }
+    assert!(crate::message::list_operation(MessageGroup::News, 0, 10).is_err());
+    assert!(crate::message::list_operation(MessageGroup::News, 1, 0).is_err());
+    assert!(MessageAction::Read(MessageId::Text(" ".into()))
+        .operation()
+        .is_err());
+    assert!(MessageAction::Delete(MessageId::Number(
+        serde_json::Number::from_f64(1.5).unwrap()
+    ))
+    .operation()
+    .is_err());
+    for bad in [
+        serde_json::json!({"messages":"bad"}),
+        serde_json::json!({"messages":[{"messageId":true}]}),
+    ] {
+        assert!(serde_json::from_value::<crate::models::MessageResp>(bad).is_err());
+    }
+}

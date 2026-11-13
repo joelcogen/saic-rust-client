@@ -8,8 +8,9 @@ use std::{
 
 use saic_client::{
     AlarmSwitch, ChargeCurrentLimit, ClientConfig, Command, CommandOutcome, Credentials,
-    DoorWindowsAction, Error, FindCarMode, LockAction, SaicClient, TailgateAction,
-    TargetBatterySoc, TemperatureProfile, VehicleLockId, VehicleWindowId,
+    DoorWindowsAction, Error, FindCarMode, LockAction, MessageAction, MessageGroup, MessageId,
+    SaicClient, TailgateAction, TargetBatterySoc, TemperatureProfile, VehicleLockId,
+    VehicleWindowId,
 };
 
 const HELP: &str = "Commands:
@@ -22,6 +23,11 @@ const HELP: &str = "Commands:
   battery-heat VIN on|off  Control battery heating
   battery-heat-enable VIN HH:MM TIMEZONE  Schedule next local occurrence (IANA zone or +HH:MM)
   battery-heat-disable VIN  Disable heating schedule without reads
+  messages GROUP PAGE SIZE  Read one page; group: alarm|command|news
+  alarm-list PAGE SIZE / command-list PAGE SIZE / news-list PAGE SIZE
+  messages-unread  Read unread counts
+  message-status read|delete ID  ID is a JSON string or integer
+  message-status delete-all GROUP  Explicit group required
   alarm-switches VIN  Read alarm switches
   alarm-switches-set VIN TYPE ALARM FUNCTION [TYPE ALARM FUNCTION ...]  Set explicit on|off flags; types: vehicle-fault, geofence, vehicle-start
   user-timezone  Read account timezone explicitly
@@ -138,6 +144,7 @@ fn read_settings(reader: impl Read) -> Result<Settings, &'static str> {
 
 // Keep command handling testable without constructing a real HTTP client.
 trait Session {
+    async fn messages(&mut self, command: MessageCommand) -> Result<String, Error>;
     async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error>;
     async fn command(&mut self, vin: &str, command: &Command) -> Result<CommandOutcome, Error>;
     async fn login(&mut self) -> Result<(), Error>;
@@ -146,6 +153,18 @@ trait Session {
 }
 
 impl Session for SaicClient {
+    async fn messages(&mut self, command: MessageCommand) -> Result<String, Error> {
+        Ok(match command {
+            MessageCommand::List(group, page, size) => {
+                format!("{:?}", self.get_message_list(group, page, size).await?)
+            }
+            MessageCommand::Unread => format!("{:?}", self.get_unread_messages_count().await?),
+            MessageCommand::Update(action) => {
+                format!("{:?}", self.update_message_status(action).await?)
+            }
+        })
+    }
+
     async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error> {
         let options = Default::default();
         // Debug intentionally redacts identifiers, location and raw server data.
@@ -282,6 +301,26 @@ async fn run_session(
                 },
                 Err(error) => writeln!(output, "{error}")?,
             },
+            text if matches!(
+                text.split_whitespace().next(),
+                Some(
+                    "messages"
+                        | "alarm-list"
+                        | "command-list"
+                        | "news-list"
+                        | "messages-unread"
+                        | "message-status"
+                )
+            ) =>
+            {
+                match parse_messages(text) {
+                    Ok(command) => match client.messages(command).await {
+                        Ok(result) => writeln!(output, "{result}")?,
+                        Err(error) => writeln!(output, "Message operation failed: {error}")?,
+                    },
+                    Err(error) => writeln!(output, "{error}")?,
+                }
+            }
             text => match parse_read(text) {
                 Ok((operation, vin)) => match client.read(operation, vin).await {
                     Ok(result) => writeln!(output, "{result}")?,
@@ -625,4 +664,40 @@ fn parse_alarm_switches(line: &str) -> Result<(&str, Command), &'static str> {
         Command::set_alarm_switches(&switches)
             .map_err(|_| "Invalid or duplicate alarm switches")?,
     ))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum MessageCommand {
+    List(MessageGroup, u32, u32),
+    Unread,
+    Update(MessageAction),
+}
+fn parse_messages(line: &str) -> Result<MessageCommand, &'static str> {
+    let parts: Vec<_> = line.split_whitespace().collect();
+    let group = |s: &str| {
+        s.parse::<MessageGroup>()
+            .map_err(|_| "Expected alarm, command or news")
+    };
+    let page = |s: &str| {
+        s.parse::<u32>()
+            .ok()
+            .filter(|n| *n > 0)
+            .ok_or("Page and size must be positive integers")
+    };
+    match parts.as_slice() {
+        ["messages", g, p, s] => Ok(MessageCommand::List(group(g)?, page(p)?, page(s)?)),
+        [name @ ("alarm-list" | "command-list" | "news-list"), p, s] => Ok(MessageCommand::List(group(name.trim_end_matches("-list"))?, page(p)?, page(s)?)),
+        ["messages-unread"] => Ok(MessageCommand::Unread),
+        ["message-status", "delete-all", g] => Ok(MessageCommand::Update(MessageAction::DeleteAll(group(g)?))),
+        ["message-status", action @ ("read" | "delete"), _] => {
+            let id: MessageId = serde_json::from_str(parts[2]).map_err(|_| "ID must be a JSON string or integer")?;
+            match &id {
+                MessageId::Text(s) if s.trim().is_empty() => return Err("ID must not be empty"),
+                MessageId::Number(n) if !n.is_i64() && !n.is_u64() => return Err("ID must be an integer"),
+                _ => {}
+            }
+            Ok(MessageCommand::Update(if *action == "read" { MessageAction::Read(id) } else { MessageAction::Delete(id) }))
+        }
+        _ => Err("Use messages GROUP PAGE SIZE, messages-unread, or message-status read|delete ID / delete-all GROUP"),
+    }
 }

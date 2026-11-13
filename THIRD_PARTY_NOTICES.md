@@ -28,6 +28,10 @@ Alarm switches in `src/alarm.rs`, `src/models.rs`, `src/reads.rs`, and
 `tests/fixtures/alarm.json` follow the same pinned revision, particularly
 `api/vehicle/alarm/__init__.py` and `api/vehicle/alarm/schema.py`.
 
+Messages in `src/message.rs`, `src/models.rs`, and `tests/fixtures/message.json`
+follow the same pinned revision, particularly `api/message/__init__.py` and
+`api/message/schema.py`.
+
 The upstream license follows.
 
 MIT License

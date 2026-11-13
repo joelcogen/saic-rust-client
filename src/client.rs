@@ -97,7 +97,7 @@ impl SaicClient {
         self.execute_operation(&operation, options, cancel).await
     }
 
-    async fn execute_operation<C: Future<Output = ()>>(
+    pub(crate) async fn execute_operation<C: Future<Output = ()>>(
         &mut self,
         operation: &crate::reads::Operation,
         options: crate::CommandOptions,
@@ -140,7 +140,7 @@ impl SaicClient {
         Self::read_result(outcome)
     }
 
-    fn read_result<T: serde::de::DeserializeOwned>(
+    pub(crate) fn read_result<T: serde::de::DeserializeOwned>(
         outcome: crate::CommandOutcome,
     ) -> Result<T, Error> {
         use crate::{CommandState, UnknownReason};

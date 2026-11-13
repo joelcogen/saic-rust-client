@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC, V2X discharge, current-limit, battery heating, window/sunroof, alarm-switch and schedule controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC, V2X discharge, current-limit, battery heating, window/sunroof, alarm-switch and schedule controls, and account messages/command history are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -29,6 +29,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 
 ## Documentation
 
+- [Messages and command history](docs/messages.md): explicit pagination, unread counts and typed status actions.
 - [Alarm switches](docs/alarms.md): explicit flags, supported types and legacy geofence intent.
 - [Windows and sunroof](docs/windows.md): selectors, all-door actions and model limitations.
 - [Charging and cable lock](docs/charging.md): independent charging, cable lock, target SoC, current limits, schedules and battery heating.
@@ -118,6 +119,14 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `battery-heat VIN on/off` | Switch battery heating independently |
 | `battery-heat-enable VIN HH:MM TIMEZONE` | Enable the next local occurrence; IANA zone or fixed offset required |
 | `battery-heat-disable VIN` | Disable heating schedule without reading status |
+| `messages alarm\|command\|news PAGE SIZE` | Read one message page without mutations |
+| `alarm-list PAGE SIZE` | Read alarm history |
+| `command-list PAGE SIZE` | Read command history |
+| `news-list PAGE SIZE` | Read news |
+| `messages-unread` | Read unread counts |
+| `message-status read ID` | Mark one message read; ID is a JSON string or integer |
+| `message-status delete ID` | Delete one message |
+| `message-status delete-all alarm\|command\|news` | Delete all messages in the explicit group |
 | `alarm-switches VIN` | Read alarm switches |
 | `alarm-switches-set VIN TYPE ALARM FUNCTION [TYPE ALARM FUNCTION ...]` | Set explicit flags (`on`/`off`); types: `vehicle-fault`, `geofence`, `vehicle-start` |
 | `user-timezone` | Explicit account-timezone read |

@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Default)]
 struct FakeSession {
+    message_calls: Vec<MessageCommand>,
     logins: usize,
     commands: usize,
     fail_commands: bool,
@@ -13,6 +14,15 @@ struct FakeSession {
 }
 
 impl Session for FakeSession {
+    async fn messages(&mut self, command: MessageCommand) -> Result<String, Error> {
+        self.message_calls.push(command);
+        if self.fail_commands {
+            Err(Error::Timeout)
+        } else {
+            Ok("Messages (data redacted)".into())
+        }
+    }
+
     async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error> {
         self.reads.push((operation, vin.to_owned()));
         if self.fail_reads {
@@ -1048,4 +1058,59 @@ async fn invalid_alarm_arguments_never_dispatch() {
         .unwrap();
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
+}
+
+#[tokio::test]
+async fn message_commands_require_explicit_arguments_and_never_refresh() {
+    let input = "messages alarm 1 20\ncommand-list 2 10\nnews-list 3 5\nalarm-list 4 1\nmessages-unread\nmessage-status read \"001\"\nmessage-status delete 42\nmessage-status delete-all alarm\nmessage-status delete-all command\nmessage-status delete-all news\n";
+    for fail in [false, true] {
+        let mut client = FakeSession {
+            fail_commands: fail,
+            ..Default::default()
+        };
+        run_session(&mut client, input.as_bytes(), Vec::new())
+            .await
+            .unwrap();
+        let expected = vec![
+            MessageCommand::List(MessageGroup::Alarm, 1, 20),
+            MessageCommand::List(MessageGroup::Command, 2, 10),
+            MessageCommand::List(MessageGroup::News, 3, 5),
+            MessageCommand::List(MessageGroup::Alarm, 4, 1),
+            MessageCommand::Unread,
+            MessageCommand::Update(MessageAction::Read(MessageId::Text("001".into()))),
+            MessageCommand::Update(MessageAction::Delete(MessageId::Number(42.into()))),
+            MessageCommand::Update(MessageAction::DeleteAll(MessageGroup::Alarm)),
+            MessageCommand::Update(MessageAction::DeleteAll(MessageGroup::Command)),
+            MessageCommand::Update(MessageAction::DeleteAll(MessageGroup::News)),
+        ];
+        assert_eq!(client.message_calls, expected);
+        assert!(client.reads.is_empty());
+        assert_eq!(client.commands, 0);
+        assert_eq!(
+            client.message_calls[0],
+            MessageCommand::List(MessageGroup::Alarm, 1, 20)
+        );
+        assert_eq!(
+            client.message_calls[5],
+            MessageCommand::Update(MessageAction::Read(MessageId::Text("001".into())))
+        );
+    }
+    let invalid = "messages\nmessages alarm 0 20\nmessages unknown 1 20\nmessages news 1 -1\nmessages news 1 20 extra\nmessages-unread extra\nmessage-status\nmessage-status delete-all\nmessage-status delete-all all\nmessage-status read\nmessage-status delete null\nmessage-status delete 1.5\nmessage-status delete \"\"\nmessage-status delete-all news extra\n";
+    let mut client = FakeSession::default();
+    run_session(&mut client, invalid.as_bytes(), Vec::new())
+        .await
+        .unwrap();
+    assert!(client.message_calls.is_empty());
+    assert!(client.reads.is_empty());
+    assert_eq!(client.commands, 0);
+    for command in [
+        "messages GROUP PAGE SIZE",
+        "messages-unread",
+        "message-status delete-all GROUP",
+        "alarm-list",
+        "command-list",
+        "news-list",
+    ] {
+        assert!(HELP.contains(command));
+    }
 }
