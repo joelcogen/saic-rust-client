@@ -770,6 +770,21 @@ async fn controls_only_continue_the_same_command_on_success_or_failure() {
         Command::find_my_car(crate::FindCarMode::Stop),
         Command::lock_vehicle(),
         Command::unlock_vehicle(),
+        Command::close_driver_window(),
+        Command::control_sunroof(false),
+        Command::control_sunroof(true),
+        Command::control_windows(
+            true,
+            &[
+                crate::VehicleWindowId::Passenger,
+                crate::VehicleWindowId::RearLeft,
+            ],
+        )
+        .unwrap(),
+        Command::control_windows(false, &[crate::VehicleWindowId::RearRight]).unwrap(),
+        Command::control_door_windows(crate::DoorWindowsAction::Close),
+        Command::control_door_windows(crate::DoorWindowsAction::Ventilate),
+        Command::control_door_windows(crate::DoorWindowsAction::Open),
         Command::open_tailgate(),
         Command::control_tailgate(crate::TailgateAction::Open),
         Command::control_tailgate(crate::TailgateAction::Close),

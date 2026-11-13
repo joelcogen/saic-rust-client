@@ -102,3 +102,13 @@ Run `python3 tests/fixtures/generate_battery_heating.py` offline to regenerate
 the pinned client's next-occurrence conversion with synthetic dates and zones.
 Fixtures include on/off, disabled schedules, fixed offsets, rollover, DST gaps,
 ambiguous hours and invalid inputs. No production data or credentials are used.
+
+## Windows and sunroof
+
+Regenerate `windows.json` with `python3 tests/fixtures/generate_windows.py`
+(standard library only, offline). It covers every nonempty selector set for
+open/close, all four helpers including all door actions, empty/duplicate
+selections and invalid CLI combinations. The synthetic VIN hash verifies the
+shared transport hashes once. Payload rules come from the pinned current
+client; local validation choices are identified in the generator.
+See [window sources and limitations](../../docs/windows.md).

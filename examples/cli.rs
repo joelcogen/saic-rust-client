@@ -7,8 +7,9 @@ use std::{
 };
 
 use saic_client::{
-    ChargeCurrentLimit, ClientConfig, Command, CommandOutcome, Credentials, Error, FindCarMode,
-    LockAction, SaicClient, TailgateAction, TargetBatterySoc, TemperatureProfile, VehicleLockId,
+    ChargeCurrentLimit, ClientConfig, Command, CommandOutcome, Credentials, DoorWindowsAction,
+    Error, FindCarMode, LockAction, SaicClient, TailgateAction, TargetBatterySoc,
+    TemperatureProfile, VehicleLockId, VehicleWindowId,
 };
 
 const HELP: &str = "Commands:
@@ -30,6 +31,10 @@ const HELP: &str = "Commands:
   cable-lock VIN              Lock charging cable
   cable-unlock VIN            Unlock cable without stopping charging
   find-car VIN [lights-only|horn-only|horn-and-lights|stop]  Default: lights-only; horn modes sound the horn
+  driver-window-close VIN  Close driver window
+  sunroof-control VIN open|close  Control sunroof
+  windows-control VIN open|close SELECTOR...  Select sunroof, driver, passenger, rear-left, rear-right
+  door-windows-control VIN close|ventilate|open  All door windows; model support required
   lock VIN                    Request vehicle locking
   unlock VIN                  Request door unlocking
   tailgate-open VIN           Release tailgate latch
@@ -231,6 +236,16 @@ async fn run_session(
             text if is_charging_control(text) => match parse_charging_control(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
                     Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                    Err(error) => writeln!(output, "Command failed: {error}")?,
+                },
+                Err(error) => writeln!(output, "{error}")?,
+            },
+            text if is_window_command(text) => match parse_windows(text) {
+                Ok((vin, command)) => match client.command(vin, &command).await {
+                    Ok(outcome) => writeln!(
+                        output,
+                        "API command result (physical position unverified): {outcome:?}"
+                    )?,
                     Err(error) => writeln!(output, "Command failed: {error}")?,
                 },
                 Err(error) => writeln!(output, "{error}")?,
@@ -510,4 +525,46 @@ fn parse_charging_control(line: &str) -> Result<(&str, Command), &'static str> {
         ["cable-unlock", vin] => Ok((vin, Command::control_charging_port_lock(true))),
         _ => Err("Expected charge-target|charge-current VIN VALUE supported|unsupported, or charging-start|charging-stop|cable-lock|cable-unlock VIN"),
     }
+}
+
+fn is_window_command(line: &str) -> bool {
+    matches!(
+        line.split_whitespace().next(),
+        Some(
+            "driver-window-close" | "sunroof-control" | "windows-control" | "door-windows-control"
+        )
+    )
+}
+
+fn parse_windows(line: &str) -> Result<(&str, Command), &'static str> {
+    let parts: Vec<_> = line.split_whitespace().collect();
+    let command = match parts.as_slice() {
+        ["driver-window-close", _] => Command::close_driver_window(),
+        ["sunroof-control", _, action @ ("open" | "close")] => {
+            Command::control_sunroof(*action == "open")
+        }
+        ["windows-control", _, action @ ("open" | "close"), selectors @ ..] => {
+            let windows: Result<Vec<_>, _> = selectors
+                .iter()
+                .map(|s| match *s {
+                    "sunroof" => Ok(VehicleWindowId::Sunroof),
+                    "driver" => Ok(VehicleWindowId::Driver),
+                    "passenger" => Ok(VehicleWindowId::Passenger),
+                    "rear-left" => Ok(VehicleWindowId::RearLeft),
+                    "rear-right" => Ok(VehicleWindowId::RearRight),
+                    _ => Err("Unknown window selector"),
+                })
+                .collect();
+            Command::control_windows(*action == "open", &windows?)
+                .map_err(|_| "Select at least one window without duplicates")?
+        }
+        ["door-windows-control", _, action] => Command::control_door_windows(match *action {
+            "close" => DoorWindowsAction::Close,
+            "ventilate" => DoorWindowsAction::Ventilate,
+            "open" => DoorWindowsAction::Open,
+            _ => return Err("Expected close, ventilate or open"),
+        }),
+        _ => return Err("Invalid window arguments. Type help for commands."),
+    };
+    Ok((parts[1], command))
 }

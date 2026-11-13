@@ -1,0 +1,2638 @@
+{
+  "vin_hash": "5fa241cbbfed0f64535b0f468710897ed3b2712e3d530c157d7492dc9ec17b85",
+  "selections": [
+    {
+      "indices": [
+        0
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver passenger",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2,
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2,
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2,
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2,
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2,
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2,
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver passenger rear-left",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver passenger rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2,
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        2,
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close driver passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open driver passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "open": false,
+      "cli": "windows-control SYNTHETICVIN close sunroof driver passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "open": true,
+      "cli": "windows-control SYNTHETICVIN open sunroof driver passenger rear-left rear-right",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "indices": [],
+      "open": false,
+      "invalid": true
+    },
+    {
+      "indices": [],
+      "open": true,
+      "invalid": true
+    },
+    {
+      "indices": [
+        0,
+        0
+      ],
+      "open": false,
+      "invalid": true
+    },
+    {
+      "indices": [
+        0,
+        0
+      ],
+      "open": true,
+      "invalid": true
+    },
+    {
+      "indices": [
+        1,
+        1
+      ],
+      "open": false,
+      "invalid": true
+    },
+    {
+      "indices": [
+        1,
+        1
+      ],
+      "open": true,
+      "invalid": true
+    },
+    {
+      "indices": [
+        2,
+        2
+      ],
+      "open": false,
+      "invalid": true
+    },
+    {
+      "indices": [
+        2,
+        2
+      ],
+      "open": true,
+      "invalid": true
+    },
+    {
+      "indices": [
+        3,
+        3
+      ],
+      "open": false,
+      "invalid": true
+    },
+    {
+      "indices": [
+        3,
+        3
+      ],
+      "open": true,
+      "invalid": true
+    },
+    {
+      "indices": [
+        4,
+        4
+      ],
+      "open": false,
+      "invalid": true
+    },
+    {
+      "indices": [
+        4,
+        4
+      ],
+      "open": true,
+      "invalid": true
+    }
+  ],
+  "helpers": [
+    {
+      "cli": "driver-window-close SYNTHETICVIN",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "cli": "sunroof-control SYNTHETICVIN close",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "cli": "sunroof-control SYNTHETICVIN open",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Aw=="
+          }
+        ]
+      }
+    },
+    {
+      "cli": "door-windows-control SYNTHETICVIN close",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "cli": "door-windows-control SYNTHETICVIN ventilate",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "AQ=="
+          }
+        ]
+      }
+    },
+    {
+      "cli": "door-windows-control SYNTHETICVIN open",
+      "payload": {
+        "rvcReqType": "3",
+        "rvcParams": [
+          {
+            "paramId": 8,
+            "paramValue": "AA=="
+          },
+          {
+            "paramId": 9,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 10,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 11,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 12,
+            "paramValue": "AQ=="
+          },
+          {
+            "paramId": 13,
+            "paramValue": "Ag=="
+          }
+        ]
+      }
+    }
+  ],
+  "invalid_cli": [
+    "driver-window-close",
+    "driver-window-close vin open",
+    "sunroof-control",
+    "sunroof-control vin",
+    "sunroof-control vin ventilate",
+    "sunroof-control vin open extra",
+    "windows-control",
+    "windows-control vin open",
+    "windows-control vin ventilate driver",
+    "windows-control vin open all",
+    "windows-control vin close driver driver",
+    "windows-control vin open window-2",
+    "door-windows-control",
+    "door-windows-control vin",
+    "door-windows-control vin 3",
+    "door-windows-control vin open driver",
+    "door-windows-control vin ventilate sunroof"
+  ]
+}

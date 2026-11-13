@@ -831,3 +831,84 @@ async fn account_timezone_lookup_is_explicit_and_has_no_vin() {
         assert_eq!(client.commands, 0);
     }
 }
+
+#[tokio::test]
+async fn window_commands_match_fixtures_without_reads_even_on_failure() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/windows.json")).unwrap();
+    let cases: Vec<_> = fixture["helpers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .chain(
+            fixture["selections"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|c| c["invalid"] != true),
+        )
+        .collect();
+    for name in [
+        "driver-window-close",
+        "sunroof-control",
+        "windows-control",
+        "door-windows-control",
+    ] {
+        assert!(HELP.contains(name));
+    }
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let input = cases
+            .iter()
+            .map(|c| c["cli"].as_str().unwrap())
+            .collect::<Vec<_>>()
+            .join("\n");
+        let mut output = Vec::new();
+        run_session(&mut client, input.as_bytes(), &mut output)
+            .await
+            .unwrap();
+        assert_eq!(client.commands, cases.len());
+        assert_eq!(client.logins, 1);
+        assert!(client.reads.is_empty());
+        for (mut actual, case) in client.payloads.into_iter().zip(&cases) {
+            assert_eq!(
+                actual.as_object_mut().unwrap().remove("kind").unwrap(),
+                "Vehicle"
+            );
+            assert_eq!(actual, case["payload"]);
+        }
+        if fail_commands {
+            assert_eq!(
+                String::from_utf8(output)
+                    .unwrap()
+                    .matches("Command failed")
+                    .count(),
+                cases.len()
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_window_combinations_never_send() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/windows.json")).unwrap();
+    let lines: Vec<_> = fixture["invalid_cli"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_str().unwrap())
+        .collect();
+    for line in &lines {
+        assert!(parse_windows(line).is_err(), "{line}");
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, lines.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}

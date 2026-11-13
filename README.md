@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC, current-limit, battery heating and schedule controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC, current-limit, battery heating, window/sunroof and schedule controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -29,6 +29,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 
 ## Documentation
 
+- [Windows and sunroof](docs/windows.md): selectors, all-door actions and model limitations.
 - [Charging and cable lock](docs/charging.md): independent charging, cable lock, target SoC, current limits, schedules and battery heating.
 - [Vehicle reads](docs/reads.md): cached/live separation, typed data and capabilities.
 - [Find-car lights and horn](docs/find-car.md): explicit audible modes and a lights-only default.
@@ -86,6 +87,10 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `cable-lock VIN` | Lock the charging cable |
 | `cable-unlock VIN` | Unlock the cable without stopping charging |
 | `find-car VIN [lights-only/horn-only/horn-and-lights/stop]` | Default: lights only; horn modes sound the horn; no duration setting |
+| `driver-window-close VIN` | Close driver window |
+| `sunroof-control VIN open/close` | Select only the sunroof |
+| `windows-control VIN open/close SELECTOR...` | Select one or more: sunroof, driver, passenger, rear-left, rear-right |
+| `door-windows-control VIN close/ventilate/open` | All four door windows; leaves sunroof alone |
 | `lock VIN` | Request vehicle locking |
 | `unlock VIN` | Request door unlocking |
 | `tailgate-open VIN` | Release tailgate latch |
@@ -113,6 +118,10 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `battery-heating-schedule VIN` | Read the stored battery-heating schedule |
 | `logout` | Forget the local session without contacting SAIC |
 | `exit` or `quit` | Exit; EOF and Ctrl-C also exit |
+
+Window controls depend on vehicle support; selected-window open and all-door open
+use different protocol actions. See [window limitations](docs/windows.md). No live
+vehicle validation has been performed.
 
 Lock and tailgate completion means API completion, not verified physical position.
 Latch release and powered movement are distinct; see [lock semantics](docs/locks.md).

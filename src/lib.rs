@@ -32,6 +32,7 @@ mod locks;
 pub mod models;
 mod protocol;
 mod reads;
+mod windows;
 
 pub use charging::{ChargeCurrentLimit, ScheduleTime, ScheduledChargingMode, TargetBatterySoc};
 pub use client::SaicClient;
@@ -43,6 +44,7 @@ pub use config::{ClientConfig, Credentials};
 pub use error::{ApiFailure, Error};
 pub use find_car::FindCarMode;
 pub use locks::{LockAction, TailgateAction, VehicleLockId};
+pub use windows::{DoorWindowsAction, VehicleWindowId};
 
 #[cfg(test)]
 mod test_support;

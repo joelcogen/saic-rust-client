@@ -20,6 +20,10 @@ Lock and tailgate builders in `src/locks.rs` and `tests/fixtures/locks.json`
 follow the same pinned revision, particularly `api/vehicle/locks/__init__.py`,
 `api/vehicle/locks/schema.py` and `api/vehicle/schema.py`.
 
+Window builders in `src/windows.rs` and `tests/fixtures/windows.json` follow
+the same pinned revision, particularly `api/vehicle/windows/__init__.py`,
+`api/vehicle/windows/schema.py` and `api/vehicle/schema.py`.
+
 The upstream license follows.
 
 MIT License
