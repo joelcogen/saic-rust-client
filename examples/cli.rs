@@ -18,6 +18,10 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  charging-start VIN          Start charging
+  charging-stop VIN           Stop charging without unlocking cable
+  cable-lock VIN              Lock charging cable
+  cable-unlock VIN            Unlock cable without stopping charging
   find-car VIN [lights-only|horn-only|horn-and-lights|stop]  Default: lights-only; horn modes sound the horn
   lock VIN                    Request vehicle locking
   unlock VIN                  Request door unlocking
@@ -216,6 +220,13 @@ async fn run_session(
                     Err(error) => writeln!(output, "{error}")?,
                 }
             }
+            text if is_charging_control(text) => match parse_charging_control(text) {
+                Ok((vin, command)) => match client.command(vin, &command).await {
+                    Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                    Err(error) => writeln!(output, "Command failed: {error}")?,
+                },
+                Err(error) => writeln!(output, "{error}")?,
+            },
             text if is_lock_command(text) => match parse_locks(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
                     Ok(outcome) => writeln!(
@@ -414,4 +425,22 @@ fn parse_find_car(line: &str) -> Result<(&str, Command), &'static str> {
         _ => return Err("Expected find-car VIN [lights-only|horn-only|horn-and-lights|stop]. Horn modes sound the horn; default is lights-only. No duration setting is supported."),
     };
     Ok((vin, Command::find_my_car(mode)))
+}
+
+fn is_charging_control(line: &str) -> bool {
+    matches!(
+        line.split_whitespace().next(),
+        Some("charging-start" | "charging-stop" | "cable-lock" | "cable-unlock")
+    )
+}
+
+fn parse_charging_control(line: &str) -> Result<(&str, Command), &'static str> {
+    let parts: Vec<_> = line.split_whitespace().collect();
+    match parts.as_slice() {
+        ["charging-start", vin] => Ok((vin, Command::control_charging(false))),
+        ["charging-stop", vin] => Ok((vin, Command::control_charging(true))),
+        ["cable-lock", vin] => Ok((vin, Command::control_charging_port_lock(false))),
+        ["cable-unlock", vin] => Ok((vin, Command::control_charging_port_lock(true))),
+        _ => Err("Expected charging-start|charging-stop|cable-lock|cable-unlock VIN"),
+    }
 }

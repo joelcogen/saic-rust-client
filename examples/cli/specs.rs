@@ -516,3 +516,71 @@ async fn invalid_find_car_settings_do_not_send() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn charging_actions_dispatch_independently_without_reads_even_on_failure() {
+    let fixtures: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/charging.json")).unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let mut input = String::new();
+        for case in fixtures["actions"].as_array().unwrap() {
+            let name = case["cli"].as_str().unwrap();
+            assert!(HELP.contains(name));
+            input.push_str(&format!("{name} SYNTHETICVIN\n"));
+        }
+        let mut output = Vec::new();
+        run_session(&mut client, input.as_bytes(), &mut output)
+            .await
+            .unwrap();
+        assert_eq!(client.commands, 4);
+        assert_eq!(client.logins, 1);
+        assert!(client.reads.is_empty());
+        for (mut payload, case) in client
+            .payloads
+            .into_iter()
+            .zip(fixtures["actions"].as_array().unwrap())
+        {
+            assert_eq!(
+                payload.as_object_mut().unwrap().remove("kind"),
+                Some("Charging".into())
+            );
+            assert_eq!(payload, case["payload"]);
+        }
+        if fail_commands {
+            assert_eq!(
+                String::from_utf8(output)
+                    .unwrap()
+                    .matches("Command failed")
+                    .count(),
+                4
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_charging_control_arguments_never_send() {
+    let mut input = String::new();
+    for name in [
+        "charging-start",
+        "charging-stop",
+        "cable-lock",
+        "cable-unlock",
+    ] {
+        for args in ["", "vin extra", "vin true"] {
+            let line = format!("{name} {args}");
+            assert!(parse_charging_control(&line).is_err());
+            input.push_str(&format!("{line}\n"));
+        }
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, input.as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}

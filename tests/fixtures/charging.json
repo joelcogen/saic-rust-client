@@ -1,0 +1,63 @@
+{
+  "actions": [
+    {
+      "cli": "charging-start",
+      "payload": {
+        "chrgCtrlReq": 1,
+        "tboxEleccLckCtrlReq": 0,
+        "tboxV2XReq": 0
+      }
+    },
+    {
+      "cli": "charging-stop",
+      "payload": {
+        "chrgCtrlReq": 2,
+        "tboxEleccLckCtrlReq": 0,
+        "tboxV2XReq": 0
+      }
+    },
+    {
+      "cli": "cable-lock",
+      "payload": {
+        "chrgCtrlReq": 0,
+        "tboxEleccLckCtrlReq": 1,
+        "tboxV2XReq": 0
+      }
+    },
+    {
+      "cli": "cable-unlock",
+      "payload": {
+        "chrgCtrlReq": 0,
+        "tboxEleccLckCtrlReq": 2,
+        "tboxV2XReq": 0
+      }
+    }
+  ],
+  "responses": {
+    "completed": {
+      "code": 0,
+      "message": "synthetic completion",
+      "data": {
+        "bmsChrgSts": 1,
+        "bmsChrgSpRsn": 4,
+        "futureField": {
+          "value": 12
+        }
+      }
+    },
+    "rejected": {
+      "code": 7,
+      "message": "synthetic rejection",
+      "data": {
+        "reason": 42
+      }
+    },
+    "pending": {
+      "code": 1,
+      "message": "synthetic pending",
+      "data": {
+        "progress": 5
+      }
+    }
+  }
+}

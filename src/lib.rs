@@ -20,6 +20,7 @@
 
 #![forbid(unsafe_code)]
 
+mod charging;
 mod client;
 mod climate;
 mod command;

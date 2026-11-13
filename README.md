@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate and find-car lights/horn controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging and cable-lock controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -29,6 +29,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 
 ## Documentation
 
+- [Charging and cable lock](docs/charging.md): independent start/stop and lock/unlock controls.
 - [Vehicle reads](docs/reads.md): cached/live separation, typed data and capabilities.
 - [Find-car lights and horn](docs/find-car.md): explicit audible modes and a lights-only default.
 - [Door locks and tailgate](docs/locks.md): latch release, powered movement and API completion.
@@ -77,6 +78,10 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `login` | Log in again using the same credentials |
 | `vehicle-command VIN JSON` | Submit an explicit vehicle control payload |
 | `charging-command VIN JSON` | Submit an explicit charging control payload |
+| `charging-start VIN` | Start charging |
+| `charging-stop VIN` | Stop charging without unlocking the cable |
+| `cable-lock VIN` | Lock the charging cable |
+| `cable-unlock VIN` | Unlock the cable without stopping charging |
 | `find-car VIN [lights-only/horn-only/horn-and-lights/stop]` | Default: lights only; horn modes sound the horn; no duration setting |
 | `lock VIN` | Request vehicle locking |
 | `unlock VIN` | Request door unlocking |

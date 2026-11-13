@@ -817,3 +817,121 @@ async fn controls_only_continue_the_same_command_on_success_or_failure() {
         }
     }
 }
+
+#[tokio::test(start_paused = true)]
+async fn charging_actions_preserve_details_and_only_continue_the_same_control() {
+    use sha2::{Digest, Sha256};
+    let fixtures: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/charging.json")).unwrap();
+    let commands = [
+        crate::Command::control_charging(false),
+        crate::Command::control_charging(true),
+        crate::Command::control_charging_port_lock(false),
+        crate::Command::control_charging_port_lock(true),
+    ];
+    for (command, case) in commands.iter().zip(fixtures["actions"].as_array().unwrap()) {
+        let mut expected = case["payload"].clone();
+        expected["vin"] = hex::encode(Sha256::digest("SYNTHETICVIN")).into();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&command.body("SYNTHETICVIN").unwrap())
+                .unwrap(),
+            expected
+        );
+        for scenario in [
+            "completed",
+            "rejected",
+            "pending-completed",
+            "pending-rejected",
+            "pending-timeout",
+            "transport",
+        ] {
+            let mut client = authenticated().await;
+            let tenant = client.config.tenant_id.clone();
+            let mut calls = 0;
+            let out = client
+                .command_with(
+                    "SYNTHETICVIN",
+                    command,
+                    Default::default(),
+                    std::future::pending(),
+                    |request| {
+                        calls += 1;
+                        assert_eq!(request.method(), "POST");
+                        assert_eq!(request.url().path(), "/api.app/v1/vehicle/charging/control");
+                        assert_eq!(
+                            request.headers()["event-id"],
+                            if calls == 1 {
+                                "0"
+                            } else {
+                                "synthetic-charging-event"
+                            }
+                        );
+                        let (body, _) = protocol::encrypt_authenticated(
+                            "/vehicle/charging/control",
+                            request.headers()["app-send-date"].to_str().unwrap(),
+                            &tenant,
+                            request.headers()["blade-auth"].to_str().unwrap(),
+                            "application/json",
+                            &expected.to_string(),
+                        );
+                        assert_eq!(request.body().unwrap().as_bytes().unwrap(), body.as_bytes());
+                        let response = if scenario == "transport" {
+                            Err(Error::Transport)
+                        } else if scenario == "pending-timeout" && calls == 2 {
+                            Err(Error::Timeout)
+                        } else {
+                            let key = if scenario.starts_with("pending-") && calls == 1 {
+                                "pending"
+                            } else if scenario.ends_with("rejected") {
+                                "rejected"
+                            } else {
+                                "completed"
+                            };
+                            let mut response = reply(0, Some("synthetic-charging-event"), false);
+                            response.body = Zeroizing::new(
+                                serde_json::to_vec(&fixtures["responses"][key]).unwrap(),
+                            );
+                            Ok(response)
+                        };
+                        async { response }
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(
+                calls,
+                if scenario.starts_with("pending-") {
+                    2
+                } else {
+                    1
+                }
+            );
+            match scenario {
+                "transport" => assert!(matches!(out.state, crate::CommandState::Unknown(_))),
+                "pending-timeout" => assert!(matches!(
+                    out.state,
+                    crate::CommandState::Unknown(crate::UnknownReason::Timeout)
+                )),
+                s if s.ends_with("rejected") => {
+                    assert!(matches!(out.state, crate::CommandState::Rejected))
+                }
+                _ => assert!(matches!(out.state, crate::CommandState::Completed)),
+            }
+            if scenario != "transport" {
+                let key = if scenario == "pending-timeout" {
+                    "pending"
+                } else if scenario.ends_with("rejected") {
+                    "rejected"
+                } else {
+                    "completed"
+                };
+                let response = &fixtures["responses"][key];
+                assert_eq!(out.data.as_ref(), Some(&response["data"]));
+                assert_eq!(out.message.as_deref(), response["message"].as_str());
+                assert_eq!(out.saic_code, response["code"].as_i64());
+                assert_eq!(out.http_status, Some(200));
+                assert_eq!(out.event_id.as_deref(), Some("synthetic-charging-event"));
+            }
+        }
+    }
+}

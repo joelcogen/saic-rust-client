@@ -185,6 +185,7 @@ pub(crate) fn interpret(reply: Reply, outcome: &mut CommandOutcome) -> Result<bo
         if let Ok(e) = envelope {
             outcome.saic_code = Some(e.code);
             outcome.message = e.message;
+            outcome.data = e.data;
         }
         outcome.state = CommandState::InvalidSession;
         return Ok(false);
@@ -192,6 +193,7 @@ pub(crate) fn interpret(reply: Reply, outcome: &mut CommandOutcome) -> Result<bo
     let e = envelope?;
     outcome.saic_code = Some(e.code);
     outcome.message = e.message;
+    outcome.data = e.data.clone();
     if matches!(e.code, 401 | 403) {
         outcome.state = CommandState::InvalidSession;
         return Ok(false);

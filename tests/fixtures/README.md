@@ -69,3 +69,10 @@ Regenerate `find_car.json` with `python3 tests/fixtures/generate_find_car.py`
 (standard library only, offline). Four synthetic payloads cover lights only,
 horn only, both and stop, including every flag and the protocol marker.
 See [sources and settings](../../docs/find-car.md).
+
+## Charging controls
+
+`charging.json` is generated offline by `python3 tests/fixtures/generate_charging.py`.
+The generator records the pinned Python and gateway revisions. It covers four
+independent actions plus synthetic completed, rejected and pending responses.
+No credentials, vehicle data or production captures are used.
