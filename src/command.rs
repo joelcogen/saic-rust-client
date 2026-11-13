@@ -128,8 +128,8 @@ impl Command {
         {
             if *target_soc > 7
                 || *current_limit > 4
-                || *v2x_soc != 0
-                || (*target_soc == 0 && *current_limit == 0)
+                || *v2x_soc > 7
+                || (*target_soc == 0 && *current_limit == 0 && *v2x_soc == 0)
             {
                 return Err(Error::Configuration("invalid charging settings command"));
             }

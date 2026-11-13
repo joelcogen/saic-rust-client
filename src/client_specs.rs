@@ -883,12 +883,30 @@ async fn charging_actions_preserve_details_and_only_continue_the_same_control() 
         ));
         cases.push(case.clone());
     }
+    let v2x: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/v2x.json")).unwrap();
+    for case in v2x["actions"].as_array().unwrap() {
+        commands.push(if case["cli"] == "v2x-target" {
+            crate::Command::set_v2x_target_battery_soc(
+                crate::TargetBatterySoc::from_percentage(case["value"].as_i64().unwrap() as i16)
+                    .unwrap(),
+                true,
+            )
+            .unwrap()
+        } else {
+            crate::Command::control_v2x(case["cli"] == "v2x-stop", true).unwrap()
+        });
+        cases.push(case.clone());
+    }
     for (command, case) in commands.iter().zip(&cases) {
         let path = if case["cli"] == "battery-heat" {
             "/vehicle/charging/ptcHeat"
         } else if case["cli"] == "charge-schedule" {
             "/vehicle/charging/reservation"
-        } else if case["cli"] == "charge-target" || case["cli"] == "charge-current" {
+        } else if case["cli"] == "charge-target"
+            || case["cli"] == "charge-current"
+            || case["cli"] == "v2x-target"
+        {
             "/vehicle/charging/setting"
         } else {
             "/vehicle/charging/control"

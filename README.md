@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC, current-limit, battery heating, window/sunroof and schedule controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC, V2X discharge, current-limit, battery heating, window/sunroof and schedule controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -82,6 +82,9 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `charge-target VIN PERCENT supported\|unsupported` | Set target (40–100 in steps of 10); preserve current limit |
 | `charge-schedule VIN HH:MM HH:MM disabled\|until-configured-time\|until-configured-soc supported\|unsupported` | Set vehicle charging schedule; final argument is target SoC capability (see [time semantics](docs/charging.md#charging-schedules)) |
 | `charge-current VIN 6A\|8A\|16A\|MAX supported\|unsupported` | Set current limit; preserve target SoC |
+| `v2x-start VIN supported\|unsupported` | Start discharge; explicit V2X capability |
+| `v2x-stop VIN supported\|unsupported` | Stop discharge; explicit V2X capability |
+| `v2x-target VIN PERCENT supported\|unsupported` | Set discharge target (40–100 by 10); explicit V2X target capability |
 | `charging-start VIN` | Start charging |
 | `charging-stop VIN` | Stop charging without unlocking the cable |
 | `cable-lock VIN` | Lock the charging cable |

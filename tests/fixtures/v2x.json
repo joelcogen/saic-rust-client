@@ -1,0 +1,106 @@
+{
+  "actions": [
+    {
+      "cli": "v2x-start",
+      "args": "supported",
+      "payload": {
+        "chrgCtrlReq": 0,
+        "tboxEleccLckCtrlReq": 0,
+        "tboxV2XReq": 1
+      }
+    },
+    {
+      "cli": "v2x-stop",
+      "args": "supported",
+      "payload": {
+        "chrgCtrlReq": 0,
+        "tboxEleccLckCtrlReq": 0,
+        "tboxV2XReq": 2
+      }
+    },
+    {
+      "cli": "v2x-target",
+      "value": 40,
+      "args": "40 supported",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 1
+      }
+    },
+    {
+      "cli": "v2x-target",
+      "value": 50,
+      "args": "50 supported",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 2
+      }
+    },
+    {
+      "cli": "v2x-target",
+      "value": 60,
+      "args": "60 supported",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 3
+      }
+    },
+    {
+      "cli": "v2x-target",
+      "value": 70,
+      "args": "70 supported",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 4
+      }
+    },
+    {
+      "cli": "v2x-target",
+      "value": 80,
+      "args": "80 supported",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 5
+      }
+    },
+    {
+      "cli": "v2x-target",
+      "value": 90,
+      "args": "90 supported",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 6
+      }
+    },
+    {
+      "cli": "v2x-target",
+      "value": 100,
+      "args": "100 supported",
+      "payload": {
+        "onBdChrgTrgtSOCReq": 0,
+        "altngChrgCrntReq": 0,
+        "tboxV2XSpSOCReq": 7
+      }
+    }
+  ],
+  "invalid_targets": [
+    -32768,
+    -1,
+    0,
+    1,
+    7,
+    39,
+    41,
+    55,
+    99,
+    101,
+    255,
+    32767
+  ]
+}

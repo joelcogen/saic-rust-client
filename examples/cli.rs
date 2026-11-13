@@ -26,6 +26,9 @@ const HELP: &str = "Commands:
   charge-schedule VIN HH:MM HH:MM disabled|until-configured-time|until-configured-soc supported|unsupported  Set vehicle schedule; capability is target SoC support
   charge-target VIN PERCENT supported|unsupported  Set target; preserve current limit
   charge-current VIN 6A|8A|16A|MAX supported|unsupported  Set limit; preserve target
+  v2x-start VIN supported|unsupported  Start discharge
+  v2x-stop VIN supported|unsupported   Stop discharge
+  v2x-target VIN PERCENT supported|unsupported  Set discharge target (40..100 by 10)
   charging-start VIN          Start charging
   charging-stop VIN           Stop charging without unlocking cable
   cable-lock VIN              Lock charging cable
@@ -460,6 +463,9 @@ fn is_charging_control(line: &str) -> bool {
                 | "battery-heat-enable"
                 | "battery-heat-disable"
                 | "charge-schedule"
+                | "v2x-start"
+                | "v2x-stop"
+                | "v2x-target"
                 | "charge-target"
                 | "charge-current"
                 | "charging-start"
@@ -503,22 +509,33 @@ fn parse_charging_control(line: &str) -> Result<(&str, Command), &'static str> {
             Ok((vin, command))
         }
         ["charge-schedule", ..] => Err("Expected charge-schedule VIN HH:MM HH:MM disabled|until-configured-time|until-configured-soc supported|unsupported"),
-        [name @ ("charge-target" | "charge-current"), vin, value, capability] => {
+        [name @ ("charge-target" | "charge-current" | "v2x-target"), vin, value, capability] => {
             let supported = match *capability {
                 "supported" => true,
                 "unsupported" => false,
                 _ => return Err("Capability must be supported or unsupported; unknown support is not supported"),
             };
-            let command = if *name == "charge-target" {
+            let command = if *name != "charge-current" {
                 let target = value.parse::<i16>().ok().and_then(|v| TargetBatterySoc::from_percentage(v).ok())
                     .ok_or("Target must be 40, 50, 60, 70, 80, 90 or 100 percent")?;
-                Command::set_target_battery_soc(target, supported)
+                if *name == "v2x-target" { Command::set_v2x_target_battery_soc(target, supported) } else { Command::set_target_battery_soc(target, supported) }
             } else {
                 let limit = value.parse::<ChargeCurrentLimit>().map_err(|_| "Limit must be 6A, 8A, 16A or MAX")?;
                 Command::set_charge_current_limit(limit, supported)
             }.map_err(|_| "Setting is unsupported by the caller-supplied vehicle capability")?;
             Ok((vin, command))
         }
+        [name @ ("v2x-start" | "v2x-stop"), vin, capability] => {
+            let supported = match *capability {
+                "supported" => true,
+                "unsupported" => false,
+                _ => return Err("V2X capability must be supported or unsupported"),
+            };
+            Ok((vin, Command::control_v2x(*name == "v2x-stop", supported)
+                .map_err(|_| "V2X is unsupported by the caller-supplied vehicle capability")?))
+        }
+        ["v2x-start" | "v2x-stop", ..] => Err("Expected v2x-start|v2x-stop VIN supported|unsupported"),
+        ["v2x-target", ..] => Err("Expected v2x-target VIN PERCENT supported|unsupported"),
         ["charging-start", vin] => Ok((vin, Command::control_charging(false))),
         ["charging-stop", vin] => Ok((vin, Command::control_charging(true))),
         ["cable-lock", vin] => Ok((vin, Command::control_charging_port_lock(false))),

@@ -204,3 +204,48 @@ revision above. Gateway refresh and cached-state suppression remain application
 responsibilities. Synthetic Python datetime fixtures exercise offsets, midnight,
 DST gaps (including a half-hour transition), both autumn folds, and invalid input.
 Offline transport and CLI specs verify independent dispatch and failure behavior.
+
+## V2X discharge
+
+Use `Command::control_v2x(stop_v2x, supported)` to start (`false`) or stop
+(`true`) discharge. It posts to `/vehicle/charging/control` with `tboxV2XReq`
+1 or 2, and zero for both charging and cable-lock controls. It does not start or
+stop charging or change the cable lock.
+
+Use `Command::set_v2x_target_battery_soc(TargetBatterySoc, supported)` to set the
+discharge target. The validated type uses the same 40–100 percentages and codes
+1–7 listed above; other percentages and the ignore value are not target choices.
+The command posts to `/vehicle/charging/setting` with `tboxV2XSpSOCReq` set to the
+code. `onBdChrgTrgtSOCReq` and `altngChrgCrntReq` are zero (ignore), preserving
+the charge target and current limit. No existing companion values are required.
+
+Pass these commands to `execute_command`. Neither builder nor transport reads
+vehicle or charging status before, after or on failure. Only continuation of
+the same command with its event ID is allowed. Completion confirms API completion,
+not physical discharge; unknown outcomes must not trigger automatic replay.
+
+For each builder, `supported` is explicit caller-supplied capability for that
+operation. Unknown capability must be false. False returns `Error::Unsupported`
+locally. These protocol operations do not imply V2X or target support on every
+vehicle. A server rejection is retained in `CommandOutcome` with its response
+details; it does not trigger a capability probe, fallback command or refresh.
+Low-level command envelopes remain caller-owned protocol values and do not
+establish model capability.
+
+```text
+v2x-start SYNTHETICVIN supported
+v2x-stop SYNTHETICVIN supported
+v2x-target SYNTHETICVIN 40 supported
+```
+
+These are manual CLI examples, not permission to contact a vehicle. The final
+argument declares support for the selected operation; `unsupported` rejects
+without sending.
+
+The primary gateway reference at `ec814eca135792d8202dfd29d6e443b53746d2a1`
+contains no V2X handler. Payloads therefore follow `control_v2x`,
+`set_v2x_target_battery_soc` and `TargetBatteryCode` in the pinned current Python
+charging API linked above, rather than legacy protocol behavior.
+Synthetic `v2x.json` fixtures cover both actions, every target code, preserved
+companions and invalid values. Offline transport and CLI specs verify no hidden
+reads on success or failure, including same-command continuation and timeout.

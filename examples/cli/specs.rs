@@ -912,3 +912,68 @@ async fn invalid_window_combinations_never_send() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn v2x_commands_preserve_companions_and_never_read_even_on_failure() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/v2x.json")).unwrap();
+    let cases = fixture["actions"].as_array().unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let input: String = cases
+            .iter()
+            .map(|case| {
+                let name = case["cli"].as_str().unwrap();
+                assert!(HELP.contains(name));
+                format!("{name} SYNTHETICVIN {}\n", case["args"].as_str().unwrap())
+            })
+            .collect();
+        run_session(&mut client, input.as_bytes(), &mut Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(client.commands, cases.len());
+        assert!(client.reads.is_empty());
+        for (mut payload, case) in client.payloads.into_iter().zip(cases) {
+            payload.as_object_mut().unwrap().remove("kind");
+            assert_eq!(payload, case["payload"]);
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_or_unsupported_v2x_never_dispatches() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/v2x.json")).unwrap();
+    let mut lines = Vec::new();
+    for value in fixture["invalid_targets"].as_array().unwrap() {
+        assert!(TargetBatterySoc::from_percentage(value.as_i64().unwrap() as i16).is_err());
+        lines.push(format!("v2x-target vin {value} supported"));
+    }
+    for (name, value) in [("v2x-start", ""), ("v2x-stop", ""), ("v2x-target", "80")] {
+        for args in [
+            String::new(),
+            "vin".into(),
+            format!("vin {value}"),
+            format!("vin {value} unsupported"),
+            format!("vin {value} unknown"),
+            format!("vin {value} supported extra"),
+        ] {
+            lines.push(format!("{name} {args}"));
+        }
+    }
+    lines.push("v2x-target vin IGNORE supported".into());
+    lines.push("v2x-target vin 80.5 supported".into());
+    lines.push("v2x-target vin 32768 supported".into());
+    for line in &lines {
+        assert!(parse_charging_control(line).is_err(), "{line}");
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, lines.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}

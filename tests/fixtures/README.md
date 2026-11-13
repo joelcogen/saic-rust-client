@@ -112,3 +112,11 @@ selections and invalid CLI combinations. The synthetic VIN hash verifies the
 shared transport hashes once. Payload rules come from the pinned current
 client; local validation choices are identified in the generator.
 See [window sources and limitations](../../docs/windows.md).
+
+## V2X discharge
+
+Regenerate `v2x.json` with `python3 tests/fixtures/generate_v2x.py` (standard
+library, offline). The generator records the pinned current-client source and
+the absence of a gateway handler. Synthetic payloads cover start/stop, every
+target mapping and ignored companion fields, with invalid percentage examples.
+No production calls or real vehicle data are used.

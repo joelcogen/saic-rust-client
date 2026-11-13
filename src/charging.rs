@@ -2,6 +2,41 @@
 use crate::Command;
 
 impl Command {
+    /// Start discharge when `stop_v2x` is false; stop when true.
+    /// `supported` is caller-supplied V2X capability; unknown must be false.
+    /// Does not change charging or cable lock and never reads status.
+    pub fn control_v2x(stop_v2x: bool, supported: bool) -> Result<Self, crate::Error> {
+        if !supported {
+            return Err(crate::Error::Unsupported(
+                "V2X is not supported by this vehicle",
+            ));
+        }
+        Ok(Self::Charging {
+            charging: 0,
+            port_lock: 0,
+            v2x: if stop_v2x { 2 } else { 1 },
+        })
+    }
+
+    /// Set discharge target, preserving charging target and current limit with
+    /// ignore codes. `supported` declares V2X target capability; unknown is false.
+    /// No companion values or status reads are required by this protocol.
+    pub fn set_v2x_target_battery_soc(
+        target: TargetBatterySoc,
+        supported: bool,
+    ) -> Result<Self, crate::Error> {
+        if !supported {
+            return Err(crate::Error::Unsupported(
+                "V2X target SoC is not supported by this vehicle",
+            ));
+        }
+        Ok(Self::ChargingSettings {
+            target_soc: 0,
+            current_limit: 0,
+            v2x_soc: target as u8,
+        })
+    }
+
     /// Start charging when `stop_charging` is false; stop when true.
     /// Does not change the charging-port lock or refresh status.
     pub fn control_charging(stop_charging: bool) -> Self {
@@ -143,8 +178,18 @@ mod specs {
         );
         assert!(Command::set_target_battery_soc(TargetBatterySoc::P80, false).is_err());
         assert!(Command::set_charge_current_limit(ChargeCurrentLimit::A6, false).is_err());
+        for stop in [false, true] {
+            assert!(matches!(
+                Command::control_v2x(stop, false),
+                Err(crate::Error::Unsupported(_))
+            ));
+        }
+        assert!(matches!(
+            Command::set_v2x_target_battery_soc(TargetBatterySoc::P80, false),
+            Err(crate::Error::Unsupported(_))
+        ));
         // All-ignore is a settings read, so it must never pass through commands.
-        for (target_soc, current_limit, v2x_soc) in [(0, 0, 0), (8, 0, 0), (0, 5, 0), (1, 1, 1)] {
+        for (target_soc, current_limit, v2x_soc) in [(0, 0, 0), (8, 0, 0), (0, 5, 0), (0, 0, 8)] {
             assert!(Command::ChargingSettings {
                 target_soc,
                 current_limit,
