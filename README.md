@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport and cabin climate controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate and front seat-heater controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -82,6 +82,8 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `defrost-stop VIN` | Stop AC, including front defrost |
 | `ac-temperature VIN PROFILE CELSIUS` | Reissue AC start, even for an unchanged target |
 | `climate-control VIN FAN AC INDEX` | Explicit protocol bytes (0–255); AC is `on`, `off`, or `omit` |
+| `seat-left VIN LEVEL` | Set front-left heater, 0 off or 1–3 heat |
+| `seat-right VIN LEVEL` | Set front-right heater, 0 off or 1–3 heat |
 | `vehicles` | Discover account vehicles and model capabilities |
 | `vehicle-cache VIN` | Read SAIC's cached status only |
 | `vehicle-live VIN` | Explicit live vehicle refresh |
@@ -94,6 +96,8 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 
 Climate profiles are `eh32` (17–31 °C), `mzs3e` (16–31 °C), and `standard`
 (16–28 °C). Select one from known vehicle context; targets are whole degrees.
+Seat commands change only the selected seat. To change both, issue two commands;
+partial failure does not roll back or replay either command.
 No climate command fetches current state. See [climate semantics](docs/climate.md).
 
 The CLI reads `.env` from the current directory without searching parent

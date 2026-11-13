@@ -47,7 +47,7 @@ or a guarantee of vehicle support. The caller supplies supported values.
 forces AC off and omits temperature regardless of supplied values, as upstream
 does. Both numeric arguments are validated before this normalization.
 
-All modes use request type `6` on `/vehicle/control`, parameter IDs 19 (fan),
+All cabin AC modes use request type `6` on `/vehicle/control`, parameter IDs 19 (fan),
 20 (temperature), 22 (AC), and the required 255 marker. No command reads vehicle
 or charging status, even on failure. Continuation only obtains the result of the
 same command. Callers own refresh timing and any subsequent submission.
@@ -66,3 +66,31 @@ boundaries. Rust tests cover invalid values, all Celsius targets, command
 continuation and transport failure; CLI fake-session tests check dispatch,
 repeated targets, malformed arguments, and absence of implicit reads. No
 production calls are needed. See [third-party notices](../THIRD_PARTY_NOTICES.md).
+
+## Front seat heaters
+
+`Command::set_front_left_seat_heater(level)` and
+`Command::set_front_right_seat_heater(level)` accept integer levels 0–3.
+Zero explicitly turns the selected heater off; invalid levels are rejected
+locally. The caller selects a level supported by their vehicle.
+
+Each command uses request type `5` on `/vehicle/control` and contains exactly
+one seat parameter (17 left or 18 right) followed by `PARAMS_MAX` (255), whose
+value is four zero bytes. The opposite seat is omitted, including when the
+selected seat is turned off. No cached or default value is sent for it.
+
+To set both seats, build and execute two commands independently. Check each
+outcome; a partial failure never triggers rollback or replay. No status is read
+before, between, or after commands, including failures. Only continuation of
+the same command is automatic. The caller owns any subsequent refresh.
+
+CLI equivalents are `seat-left VIN LEVEL` and `seat-right VIN LEVEL`.
+For example, `seat-left SYNTHETICVIN 3` followed by
+`seat-right SYNTHETICVIN 0` heats the left seat and turns off the right seat.
+
+Seat payloads follow the local `src/saic_api.py` and `tests/test_saic_api.py`
+changes on gateway branch `fix/single-seat-heating`, based on
+`ec814eca135792d8202dfd29d6e443b53746d2a1`. The gateway's cached-state
+suppression and refresh behavior are not used. Synthetic `seats.json` fixtures
+cover every supported level on each seat, including explicit zero and omission.
+Offline transport and CLI specs check independent submissions and partial failure.
