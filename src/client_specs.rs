@@ -765,6 +765,8 @@ async fn climate_modes_only_continue_the_same_command_on_success_or_failure() {
         Command::stop_front_defrost(),
         Command::set_ac_temperature(TemperatureProfile::Mzs3e, 31).unwrap(),
         Command::control_climate(3, Some(true), 9).unwrap(),
+        Command::set_front_left_seat_heater(0).unwrap(),
+        Command::set_front_right_seat_heater(3).unwrap(),
     ] {
         for fail in [false, true] {
             let mut client = authenticated().await;
@@ -802,5 +804,47 @@ async fn climate_modes_only_continue_the_same_command_on_success_or_failure() {
                 assert!(matches!(outcome.state, crate::CommandState::Completed));
             }
         }
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn two_seats_submit_independently_without_refresh_rollback_or_replay() {
+    for failure in [0, 1, 2] {
+        let mut client = authenticated().await;
+        let mut calls = 0;
+        for (index, command) in [
+            crate::Command::set_front_left_seat_heater(3).unwrap(),
+            crate::Command::set_front_right_seat_heater(0).unwrap(),
+        ]
+        .iter()
+        .enumerate()
+        {
+            let out = client
+                .command_with(
+                    "SYNTHETICVIN",
+                    command,
+                    Default::default(),
+                    std::future::pending(),
+                    |request| {
+                        calls += 1;
+                        assert_eq!(request.method(), "POST");
+                        assert_eq!(request.url().path(), "/api.app/v1/vehicle/control");
+                        assert_eq!(request.headers()["event-id"], "0");
+                        let result = match (index, failure) {
+                            (1, 1) => Err(Error::Transport),
+                            (1, 2) => Ok(reply(7, None, false)),
+                            _ => Ok(reply(0, None, true)),
+                        };
+                        async { result }
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(
+                matches!(out.state, crate::CommandState::Completed),
+                index == 0 || failure == 0
+            );
+        }
+        assert_eq!(calls, 2);
     }
 }

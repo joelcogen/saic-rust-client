@@ -24,6 +24,8 @@ const HELP: &str = "Commands:
   defrost-stop VIN             Stop AC (including front defrost)
   ac-temperature VIN PROFILE CELSIUS  Reissue AC start at target
   climate-control VIN FAN AC INDEX    Protocol bytes 0..255; AC on/off/omit
+  seat-left VIN LEVEL         Set front-left heater (0 off, 1..3 heat)
+  seat-right VIN LEVEL        Set front-right heater (0 off, 1..3 heat)
   PROFILE is standard, eh32, or mzs3e; Celsius must fit that profile
   vehicles                   Discover vehicles and capabilities
   vehicle-cache VIN          Read cached vehicle status only
@@ -288,6 +290,8 @@ fn is_climate_command(line: &str) -> bool {
                 | "defrost-stop"
                 | "ac-temperature"
                 | "climate-control"
+                | "seat-left"
+                | "seat-right"
         )
     )
 }
@@ -296,6 +300,15 @@ fn parse_climate(line: &str) -> Result<(&str, Command), &'static str> {
     let parts: Vec<_> = line.split_whitespace().collect();
     let number = |s: &str| s.parse::<i16>().map_err(|_| "Expected an integer");
     let command = match parts.as_slice() {
+        [operation @ ("seat-left" | "seat-right"), _, level] => {
+            let level = number(level)?;
+            if *operation == "seat-left" {
+                Command::set_front_left_seat_heater(level)
+            } else {
+                Command::set_front_right_seat_heater(level)
+            }
+            .map_err(|_| "Seat heater level must be 0..=3 (0 is off)")?
+        }
         ["ac-stop", _] => Command::stop_ac(),
         ["ac-blowing", _] => Command::start_ac_blowing(),
         ["defrost-start", _] => Command::start_front_defrost(),

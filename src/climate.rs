@@ -29,6 +29,16 @@ impl TemperatureProfile {
 }
 
 impl Command {
+    /// Set only the front-left heater, from 0 (off) through 3.
+    pub fn set_front_left_seat_heater(level: i16) -> Result<Self, Error> {
+        seat_heater(17, level)
+    }
+
+    /// Set only the front-right heater, from 0 (off) through 3.
+    pub fn set_front_right_seat_heater(level: i16) -> Result<Self, Error> {
+        seat_heater(18, level)
+    }
+
     /// Start AC at an explicit whole-degree Celsius target.
     pub fn start_ac(profile: TemperatureProfile, celsius: i16) -> Result<Self, Error> {
         Self::control_climate(2, None, i16::from(profile.encode(celsius)?))
@@ -91,6 +101,22 @@ impl Command {
     }
 }
 
+fn seat_heater(id: u8, level: i16) -> Result<Command, Error> {
+    if !(0..=3).contains(&level) {
+        return Err(Error::Configuration("seat heater level must be 0..=3"));
+    }
+    Ok(Command::Vehicle {
+        request_type: "5".into(),
+        parameters: vec![
+            byte_parameter(id, level as u8),
+            ControlParameter {
+                id: 255,
+                value: "AAAAAA==".into(),
+            },
+        ],
+    })
+}
+
 fn byte_parameter(id: u8, value: u8) -> ControlParameter {
     const BASE64: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     ControlParameter {
@@ -107,6 +133,29 @@ fn byte_parameter(id: u8, value: u8) -> ControlParameter {
 mod specs {
     use super::*;
     use serde_json::Value;
+
+    #[test]
+    fn single_seat_payloads_match_gateway_fixtures() {
+        let fixtures: Value =
+            serde_json::from_str(include_str!("../tests/fixtures/seats.json")).unwrap();
+        for case in fixtures.as_array().unwrap() {
+            let level = case["level"].as_i64().unwrap() as i16;
+            let command = match case["seat"].as_str().unwrap() {
+                "left" => Command::set_front_left_seat_heater(level),
+                "right" => Command::set_front_right_seat_heater(level),
+                _ => panic!("unknown fixture seat"),
+            }
+            .unwrap();
+            let mut body: Value =
+                serde_json::from_str(&command.body("SYNTHETICVIN").unwrap()).unwrap();
+            body.as_object_mut().unwrap().remove("vin");
+            assert_eq!(body, case["payload"]);
+        }
+        for level in [i16::MIN, -1, 4, 255, 256, i16::MAX] {
+            assert!(Command::set_front_left_seat_heater(level).is_err());
+            assert!(Command::set_front_right_seat_heater(level).is_err());
+        }
+    }
 
     #[test]
     fn payloads_match_independent_python_fixtures() {

@@ -1,0 +1,138 @@
+[
+  {
+    "seat": "left",
+    "level": 0,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 17,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "seat": "left",
+    "level": 1,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 17,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "seat": "left",
+    "level": 2,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 17,
+          "paramValue": "Ag=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "seat": "left",
+    "level": 3,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 17,
+          "paramValue": "Aw=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "seat": "right",
+    "level": 0,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 18,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "seat": "right",
+    "level": 1,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 18,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "seat": "right",
+    "level": 2,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 18,
+          "paramValue": "Ag=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "seat": "right",
+    "level": 3,
+    "payload": {
+      "rvcReqType": "5",
+      "rvcParams": [
+        {
+          "paramId": 18,
+          "paramValue": "Aw=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  }
+]

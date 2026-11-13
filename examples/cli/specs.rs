@@ -5,6 +5,7 @@ struct FakeSession {
     logins: usize,
     commands: usize,
     fail_commands: bool,
+    fail_command_on: Option<usize>,
     payloads: Vec<serde_json::Value>,
     reads: Vec<(ReadCommand, String)>,
     fail_reads: bool,
@@ -24,7 +25,7 @@ impl Session for FakeSession {
     async fn command(&mut self, _vin: &str, _command: &Command) -> Result<CommandOutcome, Error> {
         self.commands += 1;
         self.payloads.push(serde_json::to_value(_command).unwrap());
-        if self.fail_commands {
+        if self.fail_commands || self.fail_command_on == Some(self.commands) {
             return Err(Error::Timeout);
         }
         Ok(CommandOutcome::default())
@@ -317,6 +318,80 @@ async fn invalid_climate_inputs_never_reach_session_commands() {
     }
     let mut client = FakeSession::default();
     run_session(&mut client, invalid.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}
+
+#[tokio::test]
+async fn seats_are_independent_even_after_partial_failure() {
+    for fail_command_on in [None, Some(1), Some(2)] {
+        let mut client = FakeSession {
+            fail_command_on,
+            ..Default::default()
+        };
+        let mut output = Vec::new();
+        run_session(
+            &mut client,
+            b"seat-left vin 3\nseat-right vin 0\nexit\n".as_slice(),
+            &mut output,
+        )
+        .await
+        .unwrap();
+        assert_eq!(client.commands, 2);
+        assert_eq!(client.logins, 1);
+        assert!(client.reads.is_empty());
+        for (payload, id, value) in [
+            (&client.payloads[0], 17, "Aw=="),
+            (&client.payloads[1], 18, "AA=="),
+        ] {
+            assert_eq!(payload["rvcReqType"], "5");
+            assert_eq!(
+                payload["rvcParams"],
+                serde_json::json!([
+                    {"paramId": id, "paramValue": value},
+                    {"paramId": 255, "paramValue": "AAAAAA=="}
+                ])
+            );
+        }
+        assert_eq!(
+            String::from_utf8(output)
+                .unwrap()
+                .matches("Command failed")
+                .count(),
+            usize::from(fail_command_on.is_some())
+        );
+    }
+}
+
+#[tokio::test]
+async fn invalid_seat_arguments_never_send() {
+    let mut input = String::new();
+    for name in ["seat-left", "seat-right"] {
+        assert!(HELP.contains(name));
+        for args in [
+            "",
+            " vin",
+            " vin -1",
+            " vin 4",
+            " vin 256",
+            " vin 32768",
+            " vin 1.5",
+            " vin omit",
+            " vin 0 extra",
+        ] {
+            let line = format!("{name}{args}");
+            assert!(parse_climate(&line).is_err());
+            input.push_str(&line);
+            input.push('\n');
+        }
+        for level in 0..=3 {
+            assert!(parse_climate(&format!("{name} vin {level}")).is_ok());
+        }
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, input.as_bytes(), &mut Vec::new())
         .await
         .unwrap();
     assert_eq!(client.commands, 0);
