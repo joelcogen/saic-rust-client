@@ -12,6 +12,7 @@ pub(crate) struct Operation {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Read {
+    AlarmSwitch,
     UserTimezone,
     Vehicles,
     Cached,
@@ -28,6 +29,7 @@ impl Read {
         }
         let hash = hex::encode(Sha256::digest(vin));
         let path = match self {
+            Self::AlarmSwitch => "/vehicle/alarmSwitch",
             Self::UserTimezone => "/user/timezone",
             Self::Vehicles => "/vehicle/list",
             Self::Cached => "/vehicle/status/cache",
@@ -80,6 +82,12 @@ macro_rules! read_method {
     };
 }
 impl SaicClient {
+    read_method!(
+        get_alarm_switch,
+        AlarmSwitch,
+        AlarmSwitchResp,
+        "Read alarm switches explicitly, without a vehicle status refresh."
+    );
     /// Explicit account timezone lookup. Commands never invoke this read.
     pub async fn get_user_timezone(&mut self) -> Result<UserTimezoneResp, Error> {
         self.read(Read::UserTimezone, "", CommandOptions::default())

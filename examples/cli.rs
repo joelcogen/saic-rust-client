@@ -7,9 +7,9 @@ use std::{
 };
 
 use saic_client::{
-    ChargeCurrentLimit, ClientConfig, Command, CommandOutcome, Credentials, DoorWindowsAction,
-    Error, FindCarMode, LockAction, SaicClient, TailgateAction, TargetBatterySoc,
-    TemperatureProfile, VehicleLockId, VehicleWindowId,
+    AlarmSwitch, ChargeCurrentLimit, ClientConfig, Command, CommandOutcome, Credentials,
+    DoorWindowsAction, Error, FindCarMode, LockAction, SaicClient, TailgateAction,
+    TargetBatterySoc, TemperatureProfile, VehicleLockId, VehicleWindowId,
 };
 
 const HELP: &str = "Commands:
@@ -22,6 +22,8 @@ const HELP: &str = "Commands:
   battery-heat VIN on|off  Control battery heating
   battery-heat-enable VIN HH:MM TIMEZONE  Schedule next local occurrence (IANA zone or +HH:MM)
   battery-heat-disable VIN  Disable heating schedule without reads
+  alarm-switches VIN  Read alarm switches
+  alarm-switches-set VIN TYPE ALARM FUNCTION [TYPE ALARM FUNCTION ...]  Set explicit on|off flags; types: vehicle-fault, geofence, vehicle-start
   user-timezone  Read account timezone explicitly
   charge-schedule VIN HH:MM HH:MM disabled|until-configured-time|until-configured-soc supported|unsupported  Set vehicle schedule; capability is target SoC support
   charge-target VIN PERCENT supported|unsupported  Set target; preserve current limit
@@ -148,6 +150,7 @@ impl Session for SaicClient {
         let options = Default::default();
         // Debug intentionally redacts identifiers, location and raw server data.
         Ok(match operation {
+            ReadCommand::AlarmSwitch => format!("{:?}", self.get_alarm_switch(vin, options).await?),
             ReadCommand::UserTimezone => format!("{:?}", self.get_user_timezone().await?),
             ReadCommand::Vehicles => format!("{:?}", self.vehicles().await?),
             ReadCommand::Cached => format!("{:?}", self.vehicle_status_cached(vin, options).await?),
@@ -236,6 +239,15 @@ async fn run_session(
                     Err(error) => writeln!(output, "{error}")?,
                 }
             }
+            text if text.split_whitespace().next() == Some("alarm-switches-set") => {
+                match parse_alarm_switches(text) {
+                    Ok((vin, command)) => match client.command(vin, &command).await {
+                        Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                        Err(error) => writeln!(output, "Command failed: {error}")?,
+                    },
+                    Err(error) => writeln!(output, "{error}")?,
+                }
+            }
             text if is_charging_control(text) => match parse_charging_control(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
                     Ok(outcome) => writeln!(output, "{outcome:?}")?,
@@ -311,6 +323,7 @@ fn parse_command(line: &str) -> Result<(&str, Command), &'static str> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ReadCommand {
+    AlarmSwitch,
     UserTimezone,
     Vehicles,
     Cached,
@@ -324,6 +337,7 @@ enum ReadCommand {
 fn parse_read(line: &str) -> Result<(ReadCommand, &str), &'static str> {
     let mut parts = line.split_whitespace();
     let operation = match parts.next() {
+        Some("alarm-switches") => ReadCommand::AlarmSwitch,
         Some("user-timezone") => ReadCommand::UserTimezone,
         Some("vehicles") => ReadCommand::Vehicles,
         Some("vehicle-cache") => ReadCommand::Cached,
@@ -584,4 +598,31 @@ fn parse_windows(line: &str) -> Result<(&str, Command), &'static str> {
         _ => return Err("Invalid window arguments. Type help for commands."),
     };
     Ok((parts[1], command))
+}
+
+fn parse_alarm_switches(line: &str) -> Result<(&str, Command), &'static str> {
+    let parts: Vec<_> = line.split_whitespace().collect();
+    if parts.len() < 5 || (parts.len() - 2) % 3 != 0 {
+        return Err("Expected VIN and TYPE ALARM FUNCTION triples");
+    }
+    let flag = |value| match value {
+        "on" => Ok(true),
+        "off" => Ok(false),
+        _ => Err("Expected on or off"),
+    };
+    let switches = parts[2..]
+        .chunks_exact(3)
+        .map(|p| {
+            Ok(AlarmSwitch {
+                alarm_type: p[0].parse().map_err(|_| "Unknown alarm type")?,
+                alarm_enabled: flag(p[1])?,
+                function_enabled: flag(p[2])?,
+            })
+        })
+        .collect::<Result<Vec<_>, &'static str>>()?;
+    Ok((
+        parts[1],
+        Command::set_alarm_switches(&switches)
+            .map_err(|_| "Invalid or duplicate alarm switches")?,
+    ))
 }

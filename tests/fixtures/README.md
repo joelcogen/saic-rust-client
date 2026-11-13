@@ -120,3 +120,12 @@ library, offline). The generator records the pinned current-client source and
 the absence of a gateway handler. Synthetic payloads cover start/stop, every
 target mapping and ignored companion fields, with invalid percentage examples.
 No production calls or real vehicle data are used.
+
+## Alarm switches
+
+`alarm.json` is generated offline with `python3 tests/fixtures/generate_alarm.py`.
+It uses synthetic values and the current alarm API/schema at client revision
+`5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`. It covers all supported types,
+explicit enable/disable flags, unknown/missing read data and invalid writes.
+Zero and mixed flags extend the reference enable-only helper using its current
+schema; no live validation is claimed. See [alarm semantics](../../docs/alarms.md).

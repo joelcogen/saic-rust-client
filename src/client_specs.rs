@@ -607,6 +607,7 @@ async fn command_validation_and_unpolled_futures_never_send() {
 async fn all_read_requests_match_reference_and_continue_only_the_same_event() {
     use crate::reads::Read;
     for (kind, path, events) in [
+        (Read::AlarmSwitch, "/vehicle/alarmSwitch", false),
         (Read::UserTimezone, "/user/timezone", false),
         (Read::Vehicles, "/vehicle/list", false),
         (Read::Cached, "/vehicle/status/cache", false),
@@ -1098,5 +1099,119 @@ fn account_timezone_response_preserves_missing_and_unknown_values() {
             serde_json::from_value(value.clone()).unwrap();
         assert_eq!(response.timezone.as_deref(), value["timezone"].as_str());
         assert!(!format!("{response:?}").contains("Brussels"));
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn alarm_reads_never_fall_back_or_continue_on_errors() {
+    for kind in 0..7 {
+        let mut client = authenticated().await;
+        let op = crate::reads::Read::AlarmSwitch
+            .operation("synthetic-vin")
+            .unwrap();
+        let mut calls = 0;
+        let out = client
+            .operation_with(&op, Default::default(), std::future::pending(), |request| {
+                calls += 1;
+                assert!(request.url().path().ends_with("/vehicle/alarmSwitch"));
+                let result = match kind {
+                    0 => Err(Error::Transport),
+                    1 => Err(Error::Timeout),
+                    2 => Ok(reply(0, Some("pending"), false)),
+                    3 => Ok(reply(7, None, false)),
+                    4 => Ok(reply(401, None, false)),
+                    5 => Ok(reply(0, None, false)),
+                    _ => {
+                        let mut r = reply(0, None, true);
+                        r.body = Zeroizing::new(b"invalid".to_vec());
+                        Ok(r)
+                    }
+                };
+                async { result }
+            })
+            .await
+            .unwrap();
+        assert!(SaicClient::read_result::<crate::models::AlarmSwitchResp>(out).is_err());
+        assert_eq!(calls, 1);
+        assert_eq!(client.is_logged_in(), kind != 4);
+    }
+}
+
+#[tokio::test]
+async fn alarm_set_is_a_single_put_even_on_failure_or_pending() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/alarm.json")).unwrap();
+    let switches: Vec<crate::AlarmSwitch> = fixture["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| serde_json::from_value(c["switch"].clone()).unwrap())
+        .collect();
+    let mut commands: Vec<_> = switches
+        .iter()
+        .map(|s| crate::Command::set_alarm_switches(&[*s]).unwrap())
+        .collect();
+    commands.push(
+        crate::Command::set_alarm_switches(&[switches[0], switches[7], switches[10]]).unwrap(),
+    );
+    for command in commands {
+        for code in fixture["reply_codes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_i64().unwrap())
+            .chain([-1, -2])
+        {
+            let mut client = authenticated().await;
+            let tenant = client.config.tenant_id.clone();
+            let mut calls = 0;
+            let outcome = client
+                .command_with(
+                    "SYNTHETICVIN",
+                    &command,
+                    Default::default(),
+                    std::future::pending(),
+                    |request| {
+                        calls += 1;
+                        assert_eq!(request.method(), "PUT");
+                        assert_eq!(request.url().path(), "/api.app/v1/vehicle/alarmSwitch");
+                        assert!(!request.headers().contains_key("event-id"));
+                        let (body, _) = protocol::encrypt_authenticated(
+                            "/vehicle/alarmSwitch",
+                            request.headers()["app-send-date"].to_str().unwrap(),
+                            &tenant,
+                            request.headers()["blade-auth"].to_str().unwrap(),
+                            "application/json",
+                            &command.body("SYNTHETICVIN").unwrap(),
+                        );
+                        assert_eq!(request.body().unwrap().as_bytes().unwrap(), body.as_bytes());
+                        let result = if code == -1 {
+                            Err(Error::Transport)
+                        } else if code == -2 {
+                            Err(Error::Timeout)
+                        } else {
+                            Ok(reply(
+                                code,
+                                if code == 1 {
+                                    Some("synthetic-event")
+                                } else {
+                                    None
+                                },
+                                false,
+                            ))
+                        };
+                        async { result }
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(calls, 1);
+            match code {
+                0 => assert!(matches!(outcome.state, crate::CommandState::Completed)),
+                401 => assert!(matches!(outcome.state, crate::CommandState::InvalidSession)),
+                500 => assert!(matches!(outcome.state, crate::CommandState::Rejected)),
+                _ => assert!(matches!(outcome.state, crate::CommandState::Unknown(_))),
+            }
+        }
     }
 }

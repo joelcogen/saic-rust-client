@@ -1,0 +1,153 @@
+{
+  "cases": [
+    {
+      "args": "vehicle-fault off off",
+      "switch": {
+        "alarmType": 0,
+        "alarmSwitch": 0,
+        "functionSwitch": 0
+      }
+    },
+    {
+      "args": "vehicle-fault off on",
+      "switch": {
+        "alarmType": 0,
+        "alarmSwitch": 0,
+        "functionSwitch": 1
+      }
+    },
+    {
+      "args": "vehicle-fault on off",
+      "switch": {
+        "alarmType": 0,
+        "alarmSwitch": 1,
+        "functionSwitch": 0
+      }
+    },
+    {
+      "args": "vehicle-fault on on",
+      "switch": {
+        "alarmType": 0,
+        "alarmSwitch": 1,
+        "functionSwitch": 1
+      }
+    },
+    {
+      "args": "geofence off off",
+      "switch": {
+        "alarmType": 2,
+        "alarmSwitch": 0,
+        "functionSwitch": 0
+      }
+    },
+    {
+      "args": "geofence off on",
+      "switch": {
+        "alarmType": 2,
+        "alarmSwitch": 0,
+        "functionSwitch": 1
+      }
+    },
+    {
+      "args": "geofence on off",
+      "switch": {
+        "alarmType": 2,
+        "alarmSwitch": 1,
+        "functionSwitch": 0
+      }
+    },
+    {
+      "args": "geofence on on",
+      "switch": {
+        "alarmType": 2,
+        "alarmSwitch": 1,
+        "functionSwitch": 1
+      }
+    },
+    {
+      "args": "vehicle-start off off",
+      "switch": {
+        "alarmType": 3,
+        "alarmSwitch": 0,
+        "functionSwitch": 0
+      }
+    },
+    {
+      "args": "vehicle-start off on",
+      "switch": {
+        "alarmType": 3,
+        "alarmSwitch": 0,
+        "functionSwitch": 1
+      }
+    },
+    {
+      "args": "vehicle-start on off",
+      "switch": {
+        "alarmType": 3,
+        "alarmSwitch": 1,
+        "functionSwitch": 0
+      }
+    },
+    {
+      "args": "vehicle-start on on",
+      "switch": {
+        "alarmType": 3,
+        "alarmSwitch": 1,
+        "functionSwitch": 1
+      }
+    }
+  ],
+  "response": {
+    "alarmSwitchList": [
+      {
+        "alarmType": 0,
+        "alarmSwitch": 0,
+        "functionSwitch": 0
+      },
+      {
+        "alarmType": 2,
+        "alarmSwitch": 0,
+        "functionSwitch": 0
+      },
+      {
+        "alarmType": 3,
+        "alarmSwitch": 0,
+        "functionSwitch": 0
+      },
+      {
+        "alarmType": 99,
+        "alarmSwitch": 7,
+        "functionSwitch": null,
+        "future": "synthetic"
+      },
+      {}
+    ]
+  },
+  "invalid": [
+    {
+      "alarmType": 1,
+      "alarmSwitch": 1,
+      "functionSwitch": 1
+    },
+    {
+      "alarmType": 2,
+      "alarmSwitch": 2,
+      "functionSwitch": 1
+    },
+    {
+      "alarmType": 2,
+      "alarmSwitch": 1,
+      "functionSwitch": -1
+    },
+    {
+      "alarmType": 2,
+      "alarmSwitch": 1
+    }
+  ],
+  "reply_codes": [
+    0,
+    1,
+    500,
+    401
+  ]
+}

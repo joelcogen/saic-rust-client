@@ -719,3 +719,33 @@ impl fmt::Debug for UserTimezoneResp {
         f.debug_struct("UserTimezoneResp").finish_non_exhaustive()
     }
 }
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+pub struct AlarmSwitchStatus {
+    #[serde(rename = "alarmType")]
+    pub alarm_type: Option<i64>,
+    #[serde(rename = "alarmSwitch")]
+    pub alarm_switch: Option<i64>,
+    #[serde(rename = "functionSwitch")]
+    pub function_switch: Option<i64>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
+}
+impl fmt::Debug for AlarmSwitchStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AlarmSwitchStatus").finish_non_exhaustive()
+    }
+}
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+pub struct AlarmSwitchResp {
+    #[serde(rename = "alarmSwitchList")]
+    pub alarm_switch_list: Option<Vec<AlarmSwitchStatus>>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
+}
+impl fmt::Debug for AlarmSwitchResp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AlarmSwitchResp").finish_non_exhaustive()
+    }
+}

@@ -20,6 +20,7 @@
 
 #![forbid(unsafe_code)]
 
+mod alarm;
 mod battery_heating;
 mod charging;
 mod client;
@@ -34,6 +35,7 @@ mod protocol;
 mod reads;
 mod windows;
 
+pub use alarm::{AlarmSwitch, AlarmType};
 pub use charging::{ChargeCurrentLimit, ScheduleTime, ScheduledChargingMode, TargetBatterySoc};
 pub use client::SaicClient;
 pub use climate::TemperatureProfile;

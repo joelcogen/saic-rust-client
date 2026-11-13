@@ -24,6 +24,10 @@ Window builders in `src/windows.rs` and `tests/fixtures/windows.json` follow
 the same pinned revision, particularly `api/vehicle/windows/__init__.py`,
 `api/vehicle/windows/schema.py` and `api/vehicle/schema.py`.
 
+Alarm switches in `src/alarm.rs`, `src/models.rs`, `src/reads.rs`, and
+`tests/fixtures/alarm.json` follow the same pinned revision, particularly
+`api/vehicle/alarm/__init__.py` and `api/vehicle/alarm/schema.py`.
+
 The upstream license follows.
 
 MIT License

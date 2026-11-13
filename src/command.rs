@@ -19,6 +19,10 @@ pub struct ControlParameter {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", deny_unknown_fields)]
 pub enum Command {
+    AlarmSwitches {
+        #[serde(rename = "alarmSwitchList")]
+        switches: Vec<crate::AlarmSwitch>,
+    },
     Vehicle {
         #[serde(rename = "rvcReqType")]
         request_type: String,
@@ -71,11 +75,23 @@ pub enum Command {
 
 impl Command {
     pub(crate) fn events(&self) -> bool {
-        !matches!(self, Self::BatteryHeatingSchedule { .. })
+        !matches!(
+            self,
+            Self::BatteryHeatingSchedule { .. } | Self::AlarmSwitches { .. }
+        )
+    }
+
+    pub(crate) fn method(&self) -> reqwest::Method {
+        if matches!(self, Self::AlarmSwitches { .. }) {
+            reqwest::Method::PUT
+        } else {
+            reqwest::Method::POST
+        }
     }
 
     pub(crate) fn path(&self) -> &'static str {
         match self {
+            Self::AlarmSwitches { .. } => "/vehicle/alarmSwitch",
             Self::BatteryHeating { .. } => "/vehicle/charging/ptcHeat",
             Self::BatteryHeatingSchedule { .. } => "/charging/batteryHeating",
             Self::ChargingSchedule { .. } => "/vehicle/charging/reservation",
@@ -89,6 +105,7 @@ impl Command {
             return Err(Error::Configuration("VIN must not be empty"));
         }
         match self {
+            Self::AlarmSwitches { switches } => crate::alarm::validate(switches)?,
             Self::BatteryHeating { request } if !matches!(request, 1 | 2) => {
                 return Err(Error::Configuration("invalid battery heating request"))
             }

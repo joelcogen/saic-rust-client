@@ -90,7 +90,7 @@ impl SaicClient {
         let operation = crate::reads::Operation {
             path: command.path().into(),
             body: Zeroizing::new(command.body(vin)?),
-            method: reqwest::Method::POST,
+            method: command.method(),
             events: command.events(),
             allow_empty_result: !command.events(),
         };
@@ -183,7 +183,7 @@ impl SaicClient {
         let operation = crate::reads::Operation {
             path: command.path().into(),
             body: Zeroizing::new(command.body(vin)?),
-            method: reqwest::Method::POST,
+            method: command.method(),
             events: command.events(),
             allow_empty_result: !command.events(),
         };

@@ -977,3 +977,75 @@ async fn invalid_or_unsupported_v2x_never_dispatches() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn alarm_switch_commands_dispatch_explicit_flags_without_reads() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/alarm.json")).unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let input = fixture["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| format!("alarm-switches-set vin {}\n", c["args"].as_str().unwrap()))
+            .collect::<String>();
+        run_session(&mut client, input.as_bytes(), &mut Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(client.commands, 12);
+        assert!(client.reads.is_empty());
+        for (payload, case) in client
+            .payloads
+            .iter()
+            .zip(fixture["cases"].as_array().unwrap())
+        {
+            assert_eq!(
+                payload["alarmSwitchList"],
+                serde_json::json!([case["switch"]])
+            );
+        }
+    }
+    let (_, command) = parse_alarm_switches(
+        "alarm-switches-set vin vehicle-fault on off geofence off on vehicle-start on on",
+    )
+    .unwrap();
+    assert_eq!(
+        serde_json::to_value(command).unwrap()["alarmSwitchList"]
+            .as_array()
+            .unwrap()
+            .len(),
+        3
+    );
+    for fail_reads in [false, true] {
+        let mut client = FakeSession {
+            fail_reads,
+            ..Default::default()
+        };
+        run_session(
+            &mut client,
+            b"alarm-switches vin\n".as_slice(),
+            &mut Vec::new(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(client.reads, vec![(ReadCommand::AlarmSwitch, "vin".into())]);
+        assert_eq!(client.commands, 0);
+    }
+    assert!(HELP.contains("alarm-switches VIN"));
+    assert!(HELP.contains("alarm-switches-set VIN"));
+}
+
+#[tokio::test]
+async fn invalid_alarm_arguments_never_dispatch() {
+    let mut client = FakeSession::default();
+    let input = "alarm-switches\nalarm-switches vin extra\nalarm-switches-set\nalarm-switches-set vin\nalarm-switches-set vin geofence on\nalarm-switches-set vin geofence on on extra\nalarm-switches-set vin region on on\nalarm-switches-set vin geofence yes off\nalarm-switches-set vin geofence on 2\nalarm-switches-set vin geofence on on geofence off off\n";
+    run_session(&mut client, input.as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}
