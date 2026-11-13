@@ -91,7 +91,8 @@ impl SaicClient {
             path: command.path().into(),
             body: Zeroizing::new(command.body(vin)?),
             method: reqwest::Method::POST,
-            events: true,
+            events: command.events(),
+            allow_empty_result: !command.events(),
         };
         self.execute_operation(&operation, options, cancel).await
     }
@@ -183,7 +184,8 @@ impl SaicClient {
             path: command.path().into(),
             body: Zeroizing::new(command.body(vin)?),
             method: reqwest::Method::POST,
-            events: true,
+            events: command.events(),
+            allow_empty_result: !command.events(),
         };
         self.operation_with(&operation, options, cancel, exchange)
             .await
@@ -233,7 +235,9 @@ impl SaicClient {
                 _ = tokio::time::sleep_until(deadline) => { outcome.state = CommandState::Unknown(UnknownReason::Timeout); break; }
                 result = tokio::time::timeout(options.request_timeout, exchange(request)) => result.unwrap_or(Err(Error::Timeout)),
             };
-            let pending = result.and_then(|reply| crate::command::interpret(reply, &mut outcome));
+            let pending = result.and_then(|reply| {
+                crate::command::interpret(reply, &mut outcome, operation.allow_empty_result)
+            });
             match pending {
                 Ok(false) => {
                     if matches!(outcome.state, CommandState::InvalidSession) {
@@ -250,7 +254,7 @@ impl SaicClient {
                 }
                 Ok(true) if !operation.events => {
                     outcome.state = CommandState::Unknown(UnknownReason::Failure(
-                        Error::InvalidResponse("unexpected pending result for single read"),
+                        Error::InvalidResponse("unexpected pending result for single operation"),
                     ));
                     break;
                 }

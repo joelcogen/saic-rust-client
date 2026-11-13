@@ -607,6 +607,7 @@ async fn command_validation_and_unpolled_futures_never_send() {
 async fn all_read_requests_match_reference_and_continue_only_the_same_event() {
     use crate::reads::Read;
     for (kind, path, events) in [
+        (Read::UserTimezone, "/user/timezone", false),
         (Read::Vehicles, "/vehicle/list", false),
         (Read::Cached, "/vehicle/status/cache", false),
         (Read::Live, "/vehicle/status", true),
@@ -654,7 +655,7 @@ async fn all_read_requests_match_reference_and_continue_only_the_same_event() {
                 } else {
                     assert!(request.body().is_none());
                     let query: Vec<_> = request.url().query_pairs().collect();
-                    if kind == Read::Vehicles {
+                    if matches!(kind, Read::Vehicles | Read::UserTimezone) {
                         assert!(query.is_empty());
                     } else {
                         let vector: serde_json::Value =
@@ -859,8 +860,18 @@ async fn charging_actions_preserve_details_and_only_continue_the_same_control() 
         );
         cases.push(case.clone());
     }
+    let heating: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/battery_heating.json")).unwrap();
+    for case in heating["actions"].as_array().unwrap() {
+        commands.push(crate::Command::control_battery_heating(
+            case["state"] == "on",
+        ));
+        cases.push(case.clone());
+    }
     for (command, case) in commands.iter().zip(&cases) {
-        let path = if case["cli"] == "charge-schedule" {
+        let path = if case["cli"] == "battery-heat" {
+            "/vehicle/charging/ptcHeat"
+        } else if case["cli"] == "charge-schedule" {
             "/vehicle/charging/reservation"
         } else if case["cli"] == "charge-target" || case["cli"] == "charge-current" {
             "/vehicle/charging/setting"
@@ -970,5 +981,89 @@ async fn charging_actions_preserve_details_and_only_continue_the_same_control() 
                 assert_eq!(out.event_id.as_deref(), Some("synthetic-charging-event"));
             }
         }
+    }
+}
+
+#[tokio::test]
+async fn battery_schedule_is_a_single_post_even_on_failure_or_pending() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/battery_heating.json")).unwrap();
+    let mut cases = vec![fixture["disabled"].clone()];
+    cases.extend(
+        fixture["schedules"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| c["payload"].clone()),
+    );
+    for payload in cases {
+        let command = crate::Command::BatteryHeatingSchedule {
+            start_time: payload["startTime"].as_i64().unwrap(),
+            status: payload["status"].as_u64().unwrap() as u8,
+        };
+        for code in [0, 1, 500, -1] {
+            let mut client = authenticated().await;
+            let tenant = client.config.tenant_id.clone();
+            let mut calls = 0;
+            let outcome = client
+                .command_with(
+                    "SYNTHETICVIN",
+                    &command,
+                    Default::default(),
+                    std::future::pending(),
+                    |request| {
+                        calls += 1;
+                        assert_eq!(request.method(), "POST");
+                        assert_eq!(request.url().path(), "/api.app/v1/charging/batteryHeating");
+                        assert!(!request.headers().contains_key("event-id"));
+                        let (body, _) = protocol::encrypt_authenticated(
+                            "/charging/batteryHeating",
+                            request.headers()["app-send-date"].to_str().unwrap(),
+                            &tenant,
+                            request.headers()["blade-auth"].to_str().unwrap(),
+                            "application/json",
+                            &command.body("SYNTHETICVIN").unwrap(),
+                        );
+                        assert_eq!(request.body().unwrap().as_bytes().unwrap(), body.as_bytes());
+                        let result = if code == -1 {
+                            Err(Error::Transport)
+                        } else {
+                            Ok(reply(
+                                code,
+                                if code == 1 {
+                                    Some("synthetic-event")
+                                } else {
+                                    None
+                                },
+                                false,
+                            ))
+                        };
+                        async { result }
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(calls, 1);
+            match code {
+                0 => assert!(matches!(outcome.state, crate::CommandState::Completed)),
+                500 => assert!(matches!(outcome.state, crate::CommandState::Rejected)),
+                _ => assert!(matches!(outcome.state, crate::CommandState::Unknown(_))),
+            }
+        }
+    }
+}
+
+#[test]
+fn account_timezone_response_preserves_missing_and_unknown_values() {
+    for value in [
+        serde_json::json!({}),
+        serde_json::json!({"timezone":null}),
+        serde_json::json!({"timezone":"Europe/Brussels", "future":42}),
+        serde_json::json!({"timezone":"Unknown/Zone"}),
+    ] {
+        let response: crate::models::UserTimezoneResp =
+            serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(response.timezone.as_deref(), value["timezone"].as_str());
+        assert!(!format!("{response:?}").contains("Brussels"));
     }
 }

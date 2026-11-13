@@ -25,6 +25,15 @@ pub enum Command {
         #[serde(rename = "rvcParams")]
         parameters: Vec<ControlParameter>,
     },
+    BatteryHeating {
+        #[serde(rename = "ptcHeatReq")]
+        request: u8,
+    },
+    BatteryHeatingSchedule {
+        #[serde(rename = "startTime")]
+        start_time: i64,
+        status: u8,
+    },
     ChargingSchedule {
         #[serde(rename = "rsvanStHour")]
         start_hour: u8,
@@ -61,8 +70,14 @@ pub enum Command {
 }
 
 impl Command {
+    pub(crate) fn events(&self) -> bool {
+        !matches!(self, Self::BatteryHeatingSchedule { .. })
+    }
+
     pub(crate) fn path(&self) -> &'static str {
         match self {
+            Self::BatteryHeating { .. } => "/vehicle/charging/ptcHeat",
+            Self::BatteryHeatingSchedule { .. } => "/charging/batteryHeating",
             Self::ChargingSchedule { .. } => "/vehicle/charging/reservation",
             Self::Vehicle { .. } => "/vehicle/control",
             Self::ChargingSettings { .. } => "/vehicle/charging/setting",
@@ -72,6 +87,17 @@ impl Command {
     pub(crate) fn body(&self, vin: &str) -> Result<String, Error> {
         if vin.trim().is_empty() {
             return Err(Error::Configuration("VIN must not be empty"));
+        }
+        match self {
+            Self::BatteryHeating { request } if !matches!(request, 1 | 2) => {
+                return Err(Error::Configuration("invalid battery heating request"))
+            }
+            Self::BatteryHeatingSchedule { start_time, status }
+                if !matches!((*status, *start_time), (0, 0) | (1, 1..)) =>
+            {
+                return Err(Error::Configuration("invalid battery heating schedule"))
+            }
+            _ => {}
         }
         if let Self::ChargingSchedule {
             start_hour,
@@ -224,7 +250,11 @@ struct Envelope {
 }
 
 /// Update context before parsing so malformed replies retain event IDs and status.
-pub(crate) fn interpret(reply: Reply, outcome: &mut CommandOutcome) -> Result<bool, Error> {
+pub(crate) fn interpret(
+    reply: Reply,
+    outcome: &mut CommandOutcome,
+    allow_empty_result: bool,
+) -> Result<bool, Error> {
     outcome.http_status = Some(reply.status.as_u16());
     if let Some(id) = reply.headers.get("event-id") {
         let id = id
@@ -269,6 +299,10 @@ pub(crate) fn interpret(reply: Reply, outcome: &mut CommandOutcome) -> Result<bo
     }
     if matches!(e.code, 2 | 3 | 7) || (e.code != 0 && outcome.event_id.is_none()) {
         outcome.state = CommandState::Rejected;
+        return Ok(false);
+    }
+    if e.code == 0 && e.data.is_none() && allow_empty_result {
+        outcome.state = CommandState::Completed;
         return Ok(false);
     }
     if e.code != 0 || (e.data.is_none() && outcome.event_id.is_some()) {

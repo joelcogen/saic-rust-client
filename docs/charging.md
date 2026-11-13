@@ -158,3 +158,49 @@ changes add no schedule override. Gateway cached-state updates and refreshes
 remain application responsibilities. Synthetic `charge_schedule.json` fixtures
 cover every mode, midnight, overnight and equal bounds, plus invalid times.
 Offline exchanges and CLI specs verify payloads, failures and no implicit reads.
+
+## Battery heating
+
+Use `Command::control_battery_heating(enable)` to switch heating on or off.
+It sends `ptcHeatReq: 1` or `2` to `POST /vehicle/charging/ptcHeat`.
+Only continuation of the same server event is allowed. The outcome retains
+server response fields, including heating stop reasons; completion does not
+verify the heater's physical state.
+
+Use `Command::enable_schedule_battery_heating(start, &timezone, now)` with a
+validated `ScheduleTime`, a chrono timezone (IANA `chrono_tz::Tz` or
+`chrono::FixedOffset`), and an explicit `DateTime<Utc>` clock value. No account
+lookup or system-local timezone fallback occurs. The conversion matches the
+pinned Python client's `enable_schedule_battery_heating`: replace today's local
+hour and minute, zero seconds, and advance one local calendar day if that wall
+time has passed. Equality stays today; seconds after that minute advance tomorrow.
+The payload contains UTC epoch milliseconds in `startTime` and `status: 1`.
+
+Named zones apply the offset for the selected date. During a repeated autumn
+hour, today's occurrence retains the current fold; advancing a day resets to the
+first occurrence. Nonexistent spring times use the offset before the gap, as
+Python `zoneinfo` does. This intentionally preserves reference behavior rather
+than rejecting DST gaps. Fixed offsets never apply DST.
+
+`Command::disable_schedule_battery_heating()` sends `startTime: 0, status: 0`;
+it needs no start time, timezone, existing schedule, or status read. Both schedule
+commands use a single `POST /charging/batteryHeating`, without event continuation
+or retries, even on failure or an unexpected pending response. Submit all three
+builders through `execute_command`.
+
+`SaicClient::get_user_timezone()` explicitly reads `GET /user/timezone` without
+a VIN. `UserTimezoneResp.timezone` preserves missing, null and unknown names;
+callers choose how to parse it. Commands never invoke this method themselves.
+
+CLI commands are `battery-heat VIN on|off`,
+`battery-heat-enable VIN HH:MM TIMEZONE`, `battery-heat-disable VIN`, and
+`user-timezone`. Enable accepts an IANA name such as `Europe/Brussels` or a fixed
+offset such as `+05:30`, and uses the current UTC clock. Like other reads, the CLI
+redacts account timezone data; library callers can access the response fields.
+
+Sources are the pinned charging and user APIs and gateway
+`drivetrain_battery_heating.py` / `drivetrain_battery_heating_schedule.py` at the
+revision above. Gateway refresh and cached-state suppression remain application
+responsibilities. Synthetic Python datetime fixtures exercise offsets, midnight,
+DST gaps (including a half-hour transition), both autumn folds, and invalid input.
+Offline transport and CLI specs verify independent dispatch and failure behavior.

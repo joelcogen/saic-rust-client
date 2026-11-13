@@ -732,3 +732,102 @@ async fn invalid_or_unsupported_schedules_never_dispatch() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn battery_heating_commands_never_read_including_on_failure() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/battery_heating.json")).unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let input = "battery-heat vin on\nbattery-heat vin off\nbattery-heat-disable vin\nbattery-heat-enable vin 07:30 Europe/Brussels\nbattery-heat-enable vin 07:30 +05:30\n";
+        run_session(&mut client, input.as_bytes(), &mut Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(client.commands, 5);
+        assert!(client.reads.is_empty());
+        for (actual, expected) in client
+            .payloads
+            .iter()
+            .take(2)
+            .zip(fixture["actions"].as_array().unwrap())
+        {
+            assert_eq!(actual["ptcHeatReq"], expected["payload"]["ptcHeatReq"]);
+        }
+        assert_eq!(client.payloads[2]["startTime"], 0);
+        assert_eq!(client.payloads[2]["status"], 0);
+        for actual in &client.payloads[3..] {
+            assert_eq!(actual["status"], 1);
+            assert!(actual["startTime"].as_i64().unwrap() > 0);
+        }
+        for command in [
+            "battery-heat",
+            "battery-heat-enable",
+            "battery-heat-disable",
+        ] {
+            assert!(HELP.contains(command));
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_battery_heating_arguments_never_dispatch() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/battery_heating.json")).unwrap();
+    let mut lines: Vec<String> = [
+        "battery-heat",
+        "battery-heat vin",
+        "battery-heat vin true",
+        "battery-heat vin on extra",
+        "battery-heat-enable vin 07:00",
+        "battery-heat-enable vin 07:00 UTC extra",
+        "battery-heat-disable",
+        "battery-heat-disable vin extra",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect();
+    for time in fixture["invalid_times"].as_array().unwrap() {
+        lines.push(format!(
+            "battery-heat-enable vin {} UTC",
+            time.as_str().unwrap()
+        ));
+    }
+    for zone in fixture["invalid_zones"].as_array().unwrap() {
+        lines.push(format!(
+            "battery-heat-enable vin 07:00 {}",
+            zone.as_str().unwrap()
+        ));
+    }
+    for line in &lines {
+        assert!(parse_charging_control(line).is_err(), "{line}");
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, lines.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}
+
+#[tokio::test]
+async fn account_timezone_lookup_is_explicit_and_has_no_vin() {
+    assert!(HELP.contains("user-timezone"));
+    assert!(parse_read("user-timezone vin").is_err());
+    for fail_reads in [false, true] {
+        let mut client = FakeSession {
+            fail_reads,
+            ..Default::default()
+        };
+        run_session(&mut client, b"user-timezone\n".as_slice(), &mut Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(
+            client.reads,
+            vec![(ReadCommand::UserTimezone, String::new())]
+        );
+        assert_eq!(client.commands, 0);
+    }
+}

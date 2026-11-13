@@ -18,6 +18,10 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  battery-heat VIN on|off  Control battery heating
+  battery-heat-enable VIN HH:MM TIMEZONE  Schedule next local occurrence (IANA zone or +HH:MM)
+  battery-heat-disable VIN  Disable heating schedule without reads
+  user-timezone  Read account timezone explicitly
   charge-schedule VIN HH:MM HH:MM disabled|until-configured-time|until-configured-soc supported|unsupported  Set vehicle schedule; capability is target SoC support
   charge-target VIN PERCENT supported|unsupported  Set target; preserve current limit
   charge-current VIN 6A|8A|16A|MAX supported|unsupported  Set limit; preserve target
@@ -136,6 +140,7 @@ impl Session for SaicClient {
         let options = Default::default();
         // Debug intentionally redacts identifiers, location and raw server data.
         Ok(match operation {
+            ReadCommand::UserTimezone => format!("{:?}", self.get_user_timezone().await?),
             ReadCommand::Vehicles => format!("{:?}", self.vehicles().await?),
             ReadCommand::Cached => format!("{:?}", self.vehicle_status_cached(vin, options).await?),
             ReadCommand::Live => format!("{:?}", self.vehicle_status_live(vin, options).await?),
@@ -288,6 +293,7 @@ fn parse_command(line: &str) -> Result<(&str, Command), &'static str> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ReadCommand {
+    UserTimezone,
     Vehicles,
     Cached,
     Live,
@@ -300,6 +306,7 @@ enum ReadCommand {
 fn parse_read(line: &str) -> Result<(ReadCommand, &str), &'static str> {
     let mut parts = line.split_whitespace();
     let operation = match parts.next() {
+        Some("user-timezone") => ReadCommand::UserTimezone,
         Some("vehicles") => ReadCommand::Vehicles,
         Some("vehicle-cache") => ReadCommand::Cached,
         Some("vehicle-live") => ReadCommand::Live,
@@ -309,7 +316,7 @@ fn parse_read(line: &str) -> Result<(ReadCommand, &str), &'static str> {
         Some("battery-heating-schedule") => ReadCommand::BatteryHeating,
         _ => return Err("Unknown command. Type help for commands."),
     };
-    let vin = if operation == ReadCommand::Vehicles {
+    let vin = if matches!(operation, ReadCommand::Vehicles | ReadCommand::UserTimezone) {
         ""
     } else {
         parts.next().ok_or("Expected exactly one VIN")?
@@ -434,7 +441,10 @@ fn is_charging_control(line: &str) -> bool {
     matches!(
         line.split_whitespace().next(),
         Some(
-            "charge-schedule"
+            "battery-heat"
+                | "battery-heat-enable"
+                | "battery-heat-disable"
+                | "charge-schedule"
                 | "charge-target"
                 | "charge-current"
                 | "charging-start"
@@ -448,6 +458,22 @@ fn is_charging_control(line: &str) -> bool {
 fn parse_charging_control(line: &str) -> Result<(&str, Command), &'static str> {
     let parts: Vec<_> = line.split_whitespace().collect();
     match parts.as_slice() {
+        ["battery-heat", vin, state] => Ok((vin, Command::control_battery_heating(match *state { "on" => true, "off" => false, _ => return Err("Expected on or off") }))),
+        ["battery-heat-disable", vin] => Ok((vin, Command::disable_schedule_battery_heating())),
+        ["battery-heat-enable", vin, start, zone] => {
+            let start = start.parse().map_err(|_| "Expected HH:MM")?;
+            let now = chrono::Utc::now();
+            let command = if let Ok(zone) = zone.parse::<chrono_tz::Tz>() {
+                Command::enable_schedule_battery_heating(start, &zone, now)
+            } else {
+                let zone = zone.parse::<chrono::FixedOffset>().map_err(|_| "Expected IANA timezone or fixed offset +HH:MM")?;
+                Command::enable_schedule_battery_heating(start, &zone, now)
+            }.map_err(|_| "Invalid heating schedule")?;
+            Ok((vin, command))
+        }
+        ["battery-heat", ..] => Err("Expected battery-heat VIN on|off"),
+        ["battery-heat-enable", ..] => Err("Expected battery-heat-enable VIN HH:MM TIMEZONE"),
+        ["battery-heat-disable", ..] => Err("Expected battery-heat-disable VIN"),
         ["charge-schedule", vin, start, end, mode, capability] => {
             let supported = match *capability {
                 "supported" => true,

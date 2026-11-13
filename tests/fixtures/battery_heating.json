@@ -1,0 +1,164 @@
+{
+  "actions": [
+    {
+      "cli": "battery-heat",
+      "state": "on",
+      "payload": {
+        "ptcHeatReq": 1
+      }
+    },
+    {
+      "cli": "battery-heat",
+      "state": "off",
+      "payload": {
+        "ptcHeatReq": 2
+      }
+    }
+  ],
+  "disabled": {
+    "startTime": 0,
+    "status": 0
+  },
+  "schedules": [
+    {
+      "zone": "UTC",
+      "now": "2026-01-01T06:00:00+00:00",
+      "start": "07:30",
+      "payload": {
+        "startTime": 1767252600000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "UTC",
+      "now": "2026-01-01T07:30:00+00:00",
+      "start": "07:30",
+      "payload": {
+        "startTime": 1767252600000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "UTC",
+      "now": "2026-01-01T07:30:01+00:00",
+      "start": "07:30",
+      "payload": {
+        "startTime": 1767339000000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "+05:30",
+      "now": "2026-01-01T22:00:00+00:00",
+      "start": "03:00",
+      "payload": {
+        "startTime": 1767389400000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "-07:00",
+      "now": "2026-01-01T01:00:00+00:00",
+      "start": "23:59",
+      "payload": {
+        "startTime": 1767250740000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-01-01T05:00:00+00:00",
+      "start": "07:30",
+      "payload": {
+        "startTime": 1767249000000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-07-01T05:00:00+00:00",
+      "start": "07:30",
+      "payload": {
+        "startTime": 1782883800000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-03-28T23:00:00+00:00",
+      "start": "02:30",
+      "payload": {
+        "startTime": 1774747800000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-03-28T20:00:00+00:00",
+      "start": "07:00",
+      "payload": {
+        "startTime": 1774760400000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-10-24T22:00:00+00:00",
+      "start": "02:30",
+      "payload": {
+        "startTime": 1792888200000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-10-25T00:45:00+00:00",
+      "start": "02:30",
+      "payload": {
+        "startTime": 1792978200000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-10-25T01:15:00+00:00",
+      "start": "02:30",
+      "payload": {
+        "startTime": 1792891800000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Europe/Brussels",
+      "now": "2026-10-25T01:45:00+00:00",
+      "start": "02:30",
+      "payload": {
+        "startTime": 1792978200000,
+        "status": 1
+      }
+    },
+    {
+      "zone": "Australia/Lord_Howe",
+      "now": "2026-10-03T14:00:00+00:00",
+      "start": "02:15",
+      "payload": {
+        "startTime": 1791042300000,
+        "status": 1
+      }
+    }
+  ],
+  "invalid_times": [
+    "24:00",
+    "00:60",
+    "7:00",
+    "12:30:01",
+    "-1:00",
+    "NaN"
+  ],
+  "invalid_zones": [
+    "Mars/Olympus",
+    "+25:00",
+    "+01:60",
+    "local"
+  ]
+}

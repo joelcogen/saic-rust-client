@@ -20,6 +20,7 @@
 
 #![forbid(unsafe_code)]
 
+mod battery_heating;
 mod charging;
 mod client;
 mod climate;

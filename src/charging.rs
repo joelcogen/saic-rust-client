@@ -156,11 +156,12 @@ mod specs {
     }
 }
 
-/// Vehicle schedule wall-clock time, with minute precision and no timezone conversion.
+/// Validated wall-clock time with minute precision. Charging schedules use it
+/// unchanged; battery-heating schedules convert it with an explicit timezone.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ScheduleTime {
-    hour: u8,
-    minute: u8,
+    pub(crate) hour: u8,
+    pub(crate) minute: u8,
 }
 
 impl ScheduleTime {

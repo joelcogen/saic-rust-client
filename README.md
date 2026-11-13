@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC and current-limit controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate, rear-window and steering-wheel heating, door locks, tailgate, find-car lights/horn, charging, cable-lock, target SoC, current-limit, battery heating and schedule controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -29,7 +29,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 
 ## Documentation
 
-- [Charging and cable lock](docs/charging.md): independent start/stop, lock/unlock, target SoC and current-limit controls.
+- [Charging and cable lock](docs/charging.md): independent charging, cable lock, target SoC, current limits, schedules and battery heating.
 - [Vehicle reads](docs/reads.md): cached/live separation, typed data and capabilities.
 - [Find-car lights and horn](docs/find-car.md): explicit audible modes and a lights-only default.
 - [Door locks and tailgate](docs/locks.md): latch release, powered movement and API completion.
@@ -106,6 +106,10 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `charging-status VIN` | Read charging status |
 | `charging-management VIN` | Read charging management data |
 | `charging-settings VIN` | Read charging settings |
+| `battery-heat VIN on/off` | Switch battery heating independently |
+| `battery-heat-enable VIN HH:MM TIMEZONE` | Enable the next local occurrence; IANA zone or fixed offset required |
+| `battery-heat-disable VIN` | Disable heating schedule without reading status |
+| `user-timezone` | Explicit account-timezone read |
 | `battery-heating-schedule VIN` | Read the stored battery-heating schedule |
 | `logout` | Forget the local session without contacting SAIC |
 | `exit` or `quit` | Exit; EOF and Ctrl-C also exit |

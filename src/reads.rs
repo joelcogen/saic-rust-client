@@ -7,10 +7,12 @@ pub(crate) struct Operation {
     pub body: zeroize::Zeroizing<String>,
     pub method: Method,
     pub events: bool,
+    pub allow_empty_result: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Read {
+    UserTimezone,
     Vehicles,
     Cached,
     Live,
@@ -21,11 +23,12 @@ pub(crate) enum Read {
 }
 impl Read {
     pub fn operation(self, vin: &str) -> Result<Operation, Error> {
-        if self != Self::Vehicles && vin.trim().is_empty() {
+        if !matches!(self, Self::Vehicles | Self::UserTimezone) && vin.trim().is_empty() {
             return Err(Error::Configuration("VIN must not be empty"));
         }
         let hash = hex::encode(Sha256::digest(vin));
         let path = match self {
+            Self::UserTimezone => "/user/timezone",
             Self::Vehicles => "/vehicle/list",
             Self::Cached => "/vehicle/status/cache",
             Self::Live => "/vehicle/status",
@@ -35,7 +38,7 @@ impl Read {
             Self::BatteryHeating => "/charging/batteryHeating",
         };
         let settings = self == Self::Settings;
-        let path = if self == Self::Vehicles || settings {
+        let path = if matches!(self, Self::Vehicles | Self::UserTimezone) || settings {
             path.to_owned()
         } else {
             format!(
@@ -48,6 +51,7 @@ impl Read {
             )
         };
         Ok(Operation {
+            allow_empty_result: false,
             path,
             method: if settings { Method::POST } else { Method::GET },
             body: zeroize::Zeroizing::new(if settings {
@@ -76,6 +80,11 @@ macro_rules! read_method {
     };
 }
 impl SaicClient {
+    /// Explicit account timezone lookup. Commands never invoke this read.
+    pub async fn get_user_timezone(&mut self) -> Result<UserTimezoneResp, Error> {
+        self.read(Read::UserTimezone, "", CommandOptions::default())
+            .await
+    }
     /// Discover account vehicles and their raw model capability declarations.
     pub async fn vehicles(&mut self) -> Result<VehicleListResp, Error> {
         self.read(Read::Vehicles, "", CommandOptions::default())

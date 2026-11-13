@@ -94,3 +94,11 @@ reservation payloads from client `5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`
 overnight and equal bounds, and invalid times. Capability behavior follows
 gateway `ec814eca135792d8202dfd29d6e443b53746d2a1`
 `drivetrain_charging_schedule.py`. No production captures are used.
+
+## Battery heating
+
+Run `python3 tests/fixtures/generate_battery_heating.py` offline to regenerate
+`battery_heating.json`. Python's standard-library datetime and zoneinfo reproduce
+the pinned client's next-occurrence conversion with synthetic dates and zones.
+Fixtures include on/off, disabled schedules, fixed offsets, rollover, DST gaps,
+ambiguous hours and invalid inputs. No production data or credentials are used.

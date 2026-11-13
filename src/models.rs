@@ -706,3 +706,16 @@ mod specs {
         assert!(!format!("{heating:?}").contains("170000"));
     }
 }
+
+/// Account timezone as returned by SAIC; missing and unknown values are preserved.
+#[derive(Clone, Default, Serialize, Deserialize)]
+pub struct UserTimezoneResp {
+    pub timezone: Option<String>,
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
+}
+impl fmt::Debug for UserTimezoneResp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("UserTimezoneResp").finish_non_exhaustive()
+    }
+}
