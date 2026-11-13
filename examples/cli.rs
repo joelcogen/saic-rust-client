@@ -7,7 +7,7 @@ use std::{
 };
 
 use saic_client::{
-    ClientConfig, Command, CommandOutcome, Credentials, Error, LockAction, SaicClient,
+    ClientConfig, Command, CommandOutcome, Credentials, Error, FindCarMode, LockAction, SaicClient,
     TailgateAction, TemperatureProfile, VehicleLockId,
 };
 
@@ -18,6 +18,7 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  find-car VIN [lights-only|horn-only|horn-and-lights|stop]  Default: lights-only; horn modes sound the horn
   lock VIN                    Request vehicle locking
   unlock VIN                  Request door unlocking
   tailgate-open VIN           Release tailgate latch
@@ -199,6 +200,15 @@ async fn run_session(
                 || text.starts_with("charging-command ") =>
             {
                 match parse_command(text) {
+                    Ok((vin, command)) => match client.command(vin, &command).await {
+                        Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                        Err(error) => writeln!(output, "Command failed: {error}")?,
+                    },
+                    Err(error) => writeln!(output, "{error}")?,
+                }
+            }
+            text if text.split_whitespace().next() == Some("find-car") => {
+                match parse_find_car(text) {
                     Ok((vin, command)) => match client.command(vin, &command).await {
                         Ok(outcome) => writeln!(output, "{outcome:?}")?,
                         Err(error) => writeln!(output, "Command failed: {error}")?,
@@ -392,4 +402,16 @@ fn parse_locks(line: &str) -> Result<(&str, Command), &'static str> {
         _ => return Err("Invalid lock/tailgate arguments. Type help for commands."),
     };
     Ok((parts[1], command))
+}
+
+fn parse_find_car(line: &str) -> Result<(&str, Command), &'static str> {
+    let args: Vec<_> = line.split_whitespace().collect();
+    let (vin, mode) = match args.as_slice() {
+        ["find-car", vin] | ["find-car", vin, "lights-only"] => (*vin, FindCarMode::LightsOnly),
+        ["find-car", vin, "horn-only"] => (*vin, FindCarMode::HornOnly),
+        ["find-car", vin, "horn-and-lights"] => (*vin, FindCarMode::HornAndLights),
+        ["find-car", vin, "stop"] => (*vin, FindCarMode::Stop),
+        _ => return Err("Expected find-car VIN [lights-only|horn-only|horn-and-lights|stop]. Horn modes sound the horn; default is lights-only. No duration setting is supported."),
+    };
+    Ok((vin, Command::find_my_car(mode)))
 }

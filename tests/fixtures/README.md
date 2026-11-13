@@ -62,3 +62,10 @@ Regenerate `locks.json` with `python3 tests/fixtures/generate_locks.py`
 (standard library only, offline). The five synthetic payloads distinguish lock,
 door unlock, latch release and powered open/close, including null parameters
 and marker presence/absence. See [sources and semantics](../../docs/locks.md).
+
+## Find-car
+
+Regenerate `find_car.json` with `python3 tests/fixtures/generate_find_car.py`
+(standard library only, offline). Four synthetic payloads cover lights only,
+horn only, both and stop, including every flag and the protocol marker.
+See [sources and settings](../../docs/find-car.md).

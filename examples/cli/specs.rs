@@ -454,3 +454,65 @@ async fn invalid_lock_and_tailgate_arguments_never_send() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn find_car_modes_and_default_never_refresh_even_on_failure() {
+    let fixtures: Vec<serde_json::Value> =
+        serde_json::from_str(include_str!("../../tests/fixtures/find_car.json")).unwrap();
+    assert!(HELP.contains("horn modes sound the horn"));
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let mut input = String::new();
+        for case in &fixtures {
+            let mode = case["mode"].as_str().unwrap();
+            assert!(HELP.contains(mode));
+            input.push_str(&format!("find-car SYNTHETICVIN {mode}\n"));
+        }
+        input.push_str("find-car SYNTHETICVIN\n");
+        let mut output = Vec::new();
+        run_session(&mut client, input.as_bytes(), &mut output)
+            .await
+            .unwrap();
+        assert_eq!(client.commands, 5);
+        assert!(client.reads.is_empty());
+        assert_eq!(client.payloads[0], client.payloads[4]);
+        for (mut actual, case) in client.payloads.into_iter().zip(&fixtures) {
+            actual.as_object_mut().unwrap().remove("kind");
+            assert_eq!(actual, case["payload"]);
+        }
+        if fail_commands {
+            assert_eq!(
+                String::from_utf8(output)
+                    .unwrap()
+                    .matches("Command failed")
+                    .count(),
+                5
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_find_car_settings_do_not_send() {
+    let invalid = [
+        "find-car",
+        "find-car vin activate",
+        "find-car vin true",
+        "find-car vin horn",
+        "find-car vin lights-only 10",
+        "find-car vin stop horn-only",
+    ];
+    for line in invalid {
+        let error = parse_find_car(line).err().unwrap();
+        assert!(error.contains("Horn modes sound the horn"));
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, invalid.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}

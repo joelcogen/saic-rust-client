@@ -1,0 +1,98 @@
+[
+  {
+    "mode": "lights-only",
+    "payload": {
+      "rvcReqType": "0",
+      "rvcParams": [
+        {
+          "paramId": 1,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 2,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 3,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "mode": "horn-only",
+    "payload": {
+      "rvcReqType": "0",
+      "rvcParams": [
+        {
+          "paramId": 1,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 2,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 3,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "mode": "horn-and-lights",
+    "payload": {
+      "rvcReqType": "0",
+      "rvcParams": [
+        {
+          "paramId": 1,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 2,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 3,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "mode": "stop",
+    "payload": {
+      "rvcReqType": "0",
+      "rvcParams": [
+        {
+          "paramId": 1,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 2,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 3,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  }
+]

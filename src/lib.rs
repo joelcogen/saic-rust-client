@@ -25,6 +25,7 @@ mod climate;
 mod command;
 mod config;
 mod error;
+mod find_car;
 mod locks;
 pub mod models;
 mod protocol;
@@ -37,6 +38,7 @@ pub use command::{
 };
 pub use config::{ClientConfig, Credentials};
 pub use error::{ApiFailure, Error};
+pub use find_car::FindCarMode;
 pub use locks::{LockAction, TailgateAction, VehicleLockId};
 
 #[cfg(test)]
