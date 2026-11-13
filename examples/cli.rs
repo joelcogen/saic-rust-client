@@ -13,6 +13,10 @@ use saic_client::{
     VehicleWindowId,
 };
 
+#[path = "cli/output.rs"]
+mod output;
+use output::Output;
+
 const HELP: &str = "Commands:
   help    Show commands
   status  Show local session expiry (no request)
@@ -69,6 +73,9 @@ const HELP: &str = "Commands:
   charging-management VIN    Read charging management data
   charging-settings VIN      Read charging settings
   battery-heating-schedule VIN  Read stored heating schedule
+  Output uses labeled fields; missing and empty values are explicit.
+  Raw protocol values retain scaling and unknown codes; no automatic refresh.
+  Vehicle discovery prints full VINs; diagnostics remain redacted.
   exit    Exit the CLI (quit and EOF also work)";
 
 #[tokio::main(flavor = "current_thread")]
@@ -156,31 +163,27 @@ impl Session for SaicClient {
     async fn messages(&mut self, command: MessageCommand) -> Result<String, Error> {
         Ok(match command {
             MessageCommand::List(group, page, size) => {
-                format!("{:?}", self.get_message_list(group, page, size).await?)
+                self.get_message_list(group, page, size).await?.output()
             }
-            MessageCommand::Unread => format!("{:?}", self.get_unread_messages_count().await?),
-            MessageCommand::Update(action) => {
-                format!("{:?}", self.update_message_status(action).await?)
-            }
+            MessageCommand::Unread => self.get_unread_messages_count().await?.output(),
+            MessageCommand::Update(action) => self.update_message_status(action).await?.output(),
         })
     }
 
     async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error> {
         let options = Default::default();
-        // Debug intentionally redacts identifiers, location and raw server data.
+        // Explicit presentation is separate from redacted diagnostics.
         Ok(match operation {
-            ReadCommand::AlarmSwitch => format!("{:?}", self.get_alarm_switch(vin, options).await?),
-            ReadCommand::UserTimezone => format!("{:?}", self.get_user_timezone().await?),
-            ReadCommand::Vehicles => format!("{:?}", self.vehicles().await?),
-            ReadCommand::Cached => format!("{:?}", self.vehicle_status_cached(vin, options).await?),
-            ReadCommand::Live => format!("{:?}", self.vehicle_status_live(vin, options).await?),
-            ReadCommand::Charging => format!("{:?}", self.charging_status(vin, options).await?),
-            ReadCommand::Management => {
-                format!("{:?}", self.charging_management(vin, options).await?)
-            }
-            ReadCommand::Settings => format!("{:?}", self.charging_settings(vin, options).await?),
+            ReadCommand::AlarmSwitch => self.get_alarm_switch(vin, options).await?.output(),
+            ReadCommand::UserTimezone => self.get_user_timezone().await?.output(),
+            ReadCommand::Vehicles => self.vehicles().await?.output(),
+            ReadCommand::Cached => self.vehicle_status_cached(vin, options).await?.output(),
+            ReadCommand::Live => self.vehicle_status_live(vin, options).await?.output(),
+            ReadCommand::Charging => self.charging_status(vin, options).await?.output(),
+            ReadCommand::Management => self.charging_management(vin, options).await?.output(),
+            ReadCommand::Settings => self.charging_settings(vin, options).await?.output(),
             ReadCommand::BatteryHeating => {
-                format!("{:?}", self.battery_heating_schedule(vin, options).await?)
+                self.battery_heating_schedule(vin, options).await?.output()
             }
         })
     }
@@ -243,7 +246,7 @@ async fn run_session(
             {
                 match parse_command(text) {
                     Ok((vin, command)) => match client.command(vin, &command).await {
-                        Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                        Ok(outcome) => writeln!(output, "{}", outcome.output())?,
                         Err(error) => writeln!(output, "Command failed: {error}")?,
                     },
                     Err(error) => writeln!(output, "{error}")?,
@@ -252,7 +255,7 @@ async fn run_session(
             text if text.split_whitespace().next() == Some("find-car") => {
                 match parse_find_car(text) {
                     Ok((vin, command)) => match client.command(vin, &command).await {
-                        Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                        Ok(outcome) => writeln!(output, "{}", outcome.output())?,
                         Err(error) => writeln!(output, "Command failed: {error}")?,
                     },
                     Err(error) => writeln!(output, "{error}")?,
@@ -261,7 +264,7 @@ async fn run_session(
             text if text.split_whitespace().next() == Some("alarm-switches-set") => {
                 match parse_alarm_switches(text) {
                     Ok((vin, command)) => match client.command(vin, &command).await {
-                        Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                        Ok(outcome) => writeln!(output, "{}", outcome.output())?,
                         Err(error) => writeln!(output, "Command failed: {error}")?,
                     },
                     Err(error) => writeln!(output, "{error}")?,
@@ -269,34 +272,28 @@ async fn run_session(
             }
             text if is_charging_control(text) => match parse_charging_control(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
-                    Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                    Ok(outcome) => writeln!(output, "{}", outcome.output())?,
                     Err(error) => writeln!(output, "Command failed: {error}")?,
                 },
                 Err(error) => writeln!(output, "{error}")?,
             },
             text if is_window_command(text) => match parse_windows(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
-                    Ok(outcome) => writeln!(
-                        output,
-                        "API command result (physical position unverified): {outcome:?}"
-                    )?,
+                    Ok(outcome) => writeln!(output, "{}", outcome.output())?,
                     Err(error) => writeln!(output, "Command failed: {error}")?,
                 },
                 Err(error) => writeln!(output, "{error}")?,
             },
             text if is_lock_command(text) => match parse_locks(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
-                    Ok(outcome) => writeln!(
-                        output,
-                        "API command result (physical position unverified): {outcome:?}"
-                    )?,
+                    Ok(outcome) => writeln!(output, "{}", outcome.output())?,
                     Err(error) => writeln!(output, "Command failed: {error}")?,
                 },
                 Err(error) => writeln!(output, "{error}")?,
             },
             text if is_climate_command(text) => match parse_climate(text) {
                 Ok((vin, command)) => match client.command(vin, &command).await {
-                    Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                    Ok(outcome) => writeln!(output, "{}", outcome.output())?,
                     Err(error) => writeln!(output, "Command failed: {error}")?,
                 },
                 Err(error) => writeln!(output, "{error}")?,

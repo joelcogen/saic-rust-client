@@ -161,9 +161,28 @@ charging-command SYNTHETICVIN00001 {"chrgCtrlReq":1,"tboxEleccLckCtrlReq":0,"tbo
 ```
 
 The vehicle example requests lights without horn; the charging example requests
-charging. All fields are caller-supplied protocol values. The CLI prints the
-outcome and code with identifiers and response data redacted. Read commands print
-the returned type with data redacted; use the library fields to inspect values.
+charging. All fields are caller-supplied protocol values. The CLI prints API completion,
+rejection, invalid session or unknown outcome, plus available SAIC/HTTP codes.
+API completion does not confirm the requested physical state. Unknown outcomes
+must not be blindly replayed.
+
+Read output uses labeled, selected response fields. `vehicles` lists every full
+VIN, available name/model and capability declarations so VINs can be copied into
+subsequent commands. Vehicle and charging reads show status, measurements,
+settings and timestamps. Alarm switches, account timezone, message counts and
+message entries also show values; message IDs retain JSON string/integer syntax.
+Missing values display `missing`; empty collections display `empty (0 entries)`.
+Known charging target/current codes include percentages/amps; unknown enum values
+remain explicit numeric codes. Other measurements retain raw protocol scaling,
+marked `raw protocol units`, and status codes remain raw without inferring off.
+Status timestamps are Unix seconds; heating schedule timestamps are UTC Unix
+milliseconds. Other timestamps retain their server representation.
+
+Terminal output includes vehicle identifiers, location and message content: take
+care when sharing it. Control characters in returned text are escaped. Credentials,
+authentication headers, arbitrary extra fields, subaccount data and raw command
+payloads/messages are not displayed. Library Debug diagnostics remain redacted.
+Formatting adds no API calls, implicit refreshes or background polling.
 Cached reads never fall back to live reads. To refresh after several controls,
 issue `vehicle-live VIN` explicitly when the sequence is finished.
 

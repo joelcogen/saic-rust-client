@@ -28,7 +28,26 @@ impl Session for FakeSession {
         if self.fail_reads {
             Err(Error::Timeout)
         } else {
-            Ok("Read completed (data redacted)".into())
+            use saic_client::models::*;
+            Ok(match operation {
+                ReadCommand::Vehicles => VehicleListResp {
+                    vin_list: Some(vec![VinInfo {
+                        vin: Some("SYNTHETICVIN00001".into()),
+                        name: Some("Test car".into()),
+                        ..Default::default()
+                    }]),
+                    ..Default::default()
+                }
+                .output(),
+                ReadCommand::Cached => VehicleStatusCacheResp::default().output(),
+                ReadCommand::Live => VehicleStatusResp::default().output(),
+                ReadCommand::Charging => ChargeStatusResp::default().output(),
+                ReadCommand::Management => ChrgMgmtDataResp::default().output(),
+                ReadCommand::Settings => ChargingSettingResp::default().output(),
+                ReadCommand::BatteryHeating => ScheduledBatteryHeatingResp::default().output(),
+                ReadCommand::AlarmSwitch => AlarmSwitchResp::default().output(),
+                ReadCommand::UserTimezone => UserTimezoneResp::default().output(),
+            })
         }
     }
     async fn command(&mut self, _vin: &str, _command: &Command) -> Result<CommandOutcome, Error> {
@@ -181,7 +200,7 @@ exit
     assert_eq!(client.commands, 2);
     assert_eq!(client.logins, 1);
     let text = String::from_utf8(output).unwrap();
-    assert!(text.contains("Unknown(Cancelled)"));
+    assert!(text.contains("Unknown outcome (cancelled)"));
     assert!(text.contains("Invalid command fields"));
     assert!(text.contains("Invalid command JSON"));
     assert!(!text.contains("SYNTHETICVIN"));
@@ -222,6 +241,20 @@ async fn all_reads_are_explicit_and_failures_do_not_trigger_refreshes() {
                     .count(),
                 7
             );
+        } else {
+            let text = String::from_utf8(output).unwrap();
+            for expected in [
+                "VIN: SYNTHETICVIN00001",
+                "Name: Test car",
+                "Vehicle status: missing",
+                "Charging status: missing",
+                "Charging management: missing",
+                "Charge target: missing",
+                "Heating schedule: missing",
+            ] {
+                assert!(text.contains(expected), "{expected}: {text}");
+            }
+            assert!(!text.contains("{ .. }"));
         }
     }
 }
