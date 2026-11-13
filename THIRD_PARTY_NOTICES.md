@@ -5,6 +5,12 @@ reference vectors in `tests/fixtures/login.json`, are based on
 [saic-python-client-ng](https://github.com/SAIC-iSmart-API/saic-python-client-ng/tree/8ab0634b292e64f5198d979636e01616ea6af34f),
 particularly `api/base.py`, `net/crypto.py`, and `crypto_utils.py`.
 
+Command transport in `src/command.rs`, `src/client.rs`, `src/protocol.rs` and
+`tests/fixtures/command.json` follows revision
+[`5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`](https://github.com/SAIC-iSmart-API/saic-python-client-ng/tree/5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e),
+particularly `api/base.py`, `api/vehicle/`, `api/vehicle_charging/` and
+`net/crypto.py`.
+
 The upstream license follows.
 
 MIT License

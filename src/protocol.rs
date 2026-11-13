@@ -55,8 +55,18 @@ pub(crate) fn encrypt_request(
     content_type: &str,
     plaintext: &str,
 ) -> (String, String) {
-    // Login always starts a fresh session, so the user-token part is empty.
-    let prefix = format!("{path}{tenant}app");
+    encrypt_authenticated(path, timestamp, tenant, "", content_type, plaintext)
+}
+
+pub(crate) fn encrypt_authenticated(
+    path: &str,
+    timestamp: &str,
+    tenant: &str,
+    token: &str,
+    content_type: &str,
+    plaintext: &str,
+) -> (String, String) {
+    let prefix = format!("{path}{tenant}{token}app");
     let key = Md5::digest(format!("{}{timestamp}1{content_type}", md5_hex(&prefix)));
     let iv = Md5::digest(timestamp);
     let ciphertext = cbc::Encryptor::<aes::Aes128>::new(&key, &iv)
@@ -69,7 +79,10 @@ pub(crate) fn encrypt_request(
     (body, hex::encode(mac.finalize().into_bytes()))
 }
 
-fn decrypt_response(headers: &HeaderMap, body: &[u8]) -> Result<Zeroizing<Vec<u8>>, Error> {
+pub(crate) fn decrypt_response(
+    headers: &HeaderMap,
+    body: &[u8],
+) -> Result<Zeroizing<Vec<u8>>, Error> {
     let timestamp = headers.get("app-send-date");
     let content_type = headers.get("original-content-type");
     match (timestamp, content_type) {

@@ -3,11 +3,16 @@ use super::*;
 #[derive(Default)]
 struct FakeSession {
     logins: usize,
+    commands: usize,
     logged_in: bool,
     fail_on: Option<usize>,
 }
 
 impl Session for FakeSession {
+    async fn command(&mut self, _vin: &str, _command: &Command) -> Result<CommandOutcome, Error> {
+        self.commands += 1;
+        Ok(CommandOutcome::default())
+    }
     async fn login(&mut self) -> Result<(), Error> {
         self.logins += 1;
         self.logged_in = false;
@@ -132,4 +137,28 @@ async fn eof_exits_cleanly() {
     assert_eq!(client.logins, 1);
     assert!(!client.logged_in);
     assert!(output.ends_with(b"Bye.\n"));
+}
+
+#[tokio::test]
+async fn handles_both_command_envelopes_without_login_or_refresh() {
+    let mut client = FakeSession::default();
+    let mut output = Vec::new();
+    let input = br#"vehicle-command SYNTHETICVIN {"rvcReqType":"0","rvcParams":[]}
+charging-command SYNTHETICVIN {"chrgCtrlReq":1,"tboxEleccLckCtrlReq":0,"tboxV2XReq":0}
+charging-command SYNTHETICVIN {"chrgCtrlReq":1}
+vehicle-command SYNTHETICVIN malformed
+exit
+"#;
+    run_session(&mut client, input.as_slice(), &mut output)
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 2);
+    assert_eq!(client.logins, 1);
+    let text = String::from_utf8(output).unwrap();
+    assert!(text.contains("Unknown(Cancelled)"));
+    assert!(text.contains("Invalid command fields"));
+    assert!(text.contains("Invalid command JSON"));
+    assert!(!text.contains("SYNTHETICVIN"));
+    assert!(HELP.contains("vehicle-command"));
+    assert!(HELP.contains("charging-command"));
 }

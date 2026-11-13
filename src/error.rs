@@ -48,7 +48,7 @@ pub enum Error {
     Timeout,
     #[error("HTTP transport failed")]
     Transport,
-    #[error("invalid login response: {0}")]
+    #[error("invalid response: {0}")]
     InvalidResponse(&'static str),
     #[error("could not decrypt the response")]
     Decryption,

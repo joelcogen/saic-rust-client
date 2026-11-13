@@ -6,13 +6,15 @@ use std::{
     time::Duration,
 };
 
-use saic_client::{ClientConfig, Credentials, Error, SaicClient};
+use saic_client::{ClientConfig, Command, CommandOutcome, Credentials, Error, SaicClient};
 
 const HELP: &str = "Commands:
   help    Show commands
   status  Show local session expiry (no request)
   login   Log in again
   logout  Forget the local session (no request)
+  vehicle-command VIN JSON   Submit a Vehicle command payload
+  charging-command VIN JSON  Submit a Charging command payload
   exit    Exit the CLI (quit and EOF also work)";
 
 #[tokio::main(flavor = "current_thread")]
@@ -88,12 +90,16 @@ fn read_settings(reader: impl Read) -> Result<Settings, &'static str> {
 
 // Keep command handling testable without constructing a real HTTP client.
 trait Session {
+    async fn command(&mut self, vin: &str, command: &Command) -> Result<CommandOutcome, Error>;
     async fn login(&mut self) -> Result<(), Error>;
     fn remaining(&self) -> Option<Duration>;
     fn logout(&mut self);
 }
 
 impl Session for SaicClient {
+    async fn command(&mut self, vin: &str, command: &Command) -> Result<CommandOutcome, Error> {
+        self.execute_command(vin, command, Default::default()).await
+    }
     async fn login(&mut self) -> Result<(), Error> {
         SaicClient::login(self).await
     }
@@ -145,6 +151,17 @@ async fn run_session(
                 writeln!(output, "Local session cleared.")?;
             }
             "exit" | "quit" => break,
+            text if text.starts_with("vehicle-command ")
+                || text.starts_with("charging-command ") =>
+            {
+                match parse_command(text) {
+                    Ok((vin, command)) => match client.command(vin, &command).await {
+                        Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                        Err(error) => writeln!(output, "Command failed: {error}")?,
+                    },
+                    Err(error) => writeln!(output, "{error}")?,
+                }
+            }
             _ => writeln!(output, "Unknown command. Type help for commands.")?,
         }
     }
@@ -156,3 +173,24 @@ async fn run_session(
 #[cfg(test)]
 #[path = "cli/specs.rs"]
 mod specs;
+
+// Payload kind is supplied by the command name, not by user JSON.
+fn parse_command(line: &str) -> Result<(&str, Command), &'static str> {
+    let mut parts = line.splitn(3, char::is_whitespace);
+    let kind = match parts.next() {
+        Some("vehicle-command") => "Vehicle",
+        Some("charging-command") => "Charging",
+        _ => return Err("Unknown command"),
+    };
+    let vin = parts
+        .next()
+        .filter(|s| !s.is_empty())
+        .ok_or("Expected VIN and JSON payload")?;
+    let mut value: serde_json::Value =
+        serde_json::from_str(parts.next().ok_or("Expected JSON payload")?)
+            .map_err(|_| "Invalid command JSON")?;
+    let object = value.as_object_mut().ok_or("Expected a JSON object")?;
+    object.insert("kind".into(), kind.into());
+    let command = serde_json::from_value(value).map_err(|_| "Invalid command fields")?;
+    Ok((vin, command))
+}

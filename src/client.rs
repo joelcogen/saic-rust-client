@@ -66,6 +66,167 @@ impl SaicClient {
         .await
     }
 
+    /// Submit once and continue only the same server event. No status refresh or relogin.
+    /// Dropping this future stops waiting; the server may still execute the command.
+    pub async fn execute_command(
+        &mut self,
+        vin: &str,
+        command: &crate::Command,
+        options: crate::CommandOptions,
+    ) -> Result<crate::CommandOutcome, Error> {
+        self.execute_command_until(vin, command, options, std::future::pending())
+            .await
+    }
+
+    /// Like execute_command, but cancellation returns an unknown outcome with the
+    /// last event ID and code. Cancellation does not cancel execution at SAIC.
+    pub async fn execute_command_until<C: Future<Output = ()>>(
+        &mut self,
+        vin: &str,
+        command: &crate::Command,
+        options: crate::CommandOptions,
+        cancel: C,
+    ) -> Result<crate::CommandOutcome, Error> {
+        let http = self.http.clone();
+        self.command_with(vin, command, options, cancel, |request| {
+            let http = http.clone();
+            async move {
+                let mut response = http.execute(request).await.map_err(Error::transport)?;
+                let status = response.status();
+                let headers = response.headers().clone();
+                let mut body = Zeroizing::new(Vec::new());
+                while let Some(chunk) = response.chunk().await.map_err(Error::transport)? {
+                    if body.len() + chunk.len() > 1024 * 1024 {
+                        return Err(Error::InvalidResponse("response exceeds 1 MiB"));
+                    }
+                    body.extend_from_slice(&chunk);
+                }
+                Ok(crate::command::Reply {
+                    status,
+                    headers,
+                    body,
+                })
+            }
+        })
+        .await
+    }
+
+    async fn command_with<F, Fut, C>(
+        &mut self,
+        vin: &str,
+        command: &crate::Command,
+        options: crate::CommandOptions,
+        cancel: C,
+        mut exchange: F,
+    ) -> Result<crate::CommandOutcome, Error>
+    where
+        F: FnMut(Request) -> Fut,
+        Fut: Future<Output = Result<crate::command::Reply, Error>>,
+        C: Future<Output = ()>,
+    {
+        use crate::{CommandOutcome, CommandState, UnknownReason};
+        if !self.is_logged_in() {
+            return Err(Error::Configuration("login required"));
+        }
+        if options.deadline.is_zero()
+            || options.request_timeout.is_zero()
+            || options.continuation_delay.is_zero()
+        {
+            return Err(Error::Configuration("command time limits must be positive"));
+        }
+        let deadline = tokio::time::Instant::now()
+            .checked_add(options.deadline)
+            .ok_or(Error::Configuration("command deadline out of range"))?;
+        let body = Zeroizing::new(command.body(vin)?);
+        let mut outcome = CommandOutcome::default();
+        tokio::pin!(cancel);
+        loop {
+            let request = match self.command_request(
+                command.path(),
+                &body,
+                outcome.event_id.as_deref().unwrap_or("0"),
+            ) {
+                Ok(request) => request,
+                Err(error) if outcome.event_id.is_none() => return Err(error),
+                Err(error) => {
+                    outcome.state = CommandState::Unknown(UnknownReason::Failure(error));
+                    break;
+                }
+            };
+            let result = tokio::select! {
+                biased;
+                _ = &mut cancel => { outcome.state = CommandState::Unknown(UnknownReason::Cancelled); break; }
+                _ = tokio::time::sleep_until(deadline) => { outcome.state = CommandState::Unknown(UnknownReason::Timeout); break; }
+                result = tokio::time::timeout(options.request_timeout, exchange(request)) => result.unwrap_or(Err(Error::Timeout)),
+            };
+            let pending = result.and_then(|reply| crate::command::interpret(reply, &mut outcome));
+            match pending {
+                Ok(false) => {
+                    if matches!(outcome.state, CommandState::InvalidSession) {
+                        self.logout();
+                    }
+                    break;
+                }
+                Err(error) => {
+                    outcome.state = CommandState::Unknown(match error {
+                        Error::Timeout => UnknownReason::Timeout,
+                        other => UnknownReason::Failure(other),
+                    });
+                    break;
+                }
+                Ok(true) => {}
+            }
+            tokio::select! {
+                biased;
+                _ = &mut cancel => { outcome.state = CommandState::Unknown(UnknownReason::Cancelled); break; }
+                _ = tokio::time::sleep_until(deadline) => { outcome.state = CommandState::Unknown(UnknownReason::Timeout); break; }
+                _ = tokio::time::sleep(options.continuation_delay) => {}
+            }
+        }
+        Ok(outcome)
+    }
+
+    fn command_request(&self, path: &str, plaintext: &str, event: &str) -> Result<Request, Error> {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| Error::Clock)?
+            .as_millis()
+            .to_string();
+        let token = &self.session.as_ref().expect("session checked").token;
+        let (body, verification) = protocol::encrypt_authenticated(
+            path,
+            &timestamp,
+            &self.config.tenant_id,
+            token,
+            "application/json",
+            plaintext,
+        );
+        let url = self
+            .login_url
+            .join(&format!("../{}", path.trim_start_matches('/')))
+            .map_err(|_| Error::Configuration("invalid command URL"))?;
+        let mut request = self.post(url).build().map_err(Error::transport)?;
+        let headers = request.headers_mut();
+        for (name, value) in [
+            ("blade-auth", token.as_str()),
+            ("event-id", event),
+            ("app-verification-string", &verification),
+            ("app-send-date", &timestamp),
+            ("content-type", "application/json;charset=utf-8"),
+            ("original-content-type", "application/json"),
+        ] {
+            let mut value = HeaderValue::from_str(value)
+                .map_err(|_| Error::InvalidResponse("invalid command header"))?;
+            value.set_sensitive(true);
+            headers.insert(
+                reqwest::header::HeaderName::from_bytes(name.as_bytes()).expect("static header"),
+                value,
+            );
+        }
+        *request.body_mut() = Some(body.into());
+        Ok(request)
+    }
+
     /// True while the locally stored session has not expired. SAIC can invalidate
     /// a session sooner; this method doesn't contact the server to check.
     pub fn is_logged_in(&self) -> bool {
@@ -102,24 +263,28 @@ impl SaicClient {
         // This is the upstream app identity, not an account credential.
         let mut authorization = HeaderValue::from_static("Basic c3dvcmQ6c3dvcmRfc2VjcmV0");
         authorization.set_sensitive(true);
-        self.http
-            .post(self.login_url.clone())
+        self.post(self.login_url.clone())
             .header("authorization", authorization)
-            .header("user-agent", "Europe/2.1.0 (iPad; iOS 18.5; Scale/2.00)")
             .header("content-type", format!("{};charset=utf-8", protocol::FORM))
+            .header("app-send-date", timestamp)
+            .header("app-verification-string", verification)
+            .header("original-content-type", protocol::FORM)
+            .body(body)
+            .build()
+            .map_err(Error::transport)
+    }
+
+    fn post(&self, url: Url) -> reqwest::RequestBuilder {
+        self.http
+            .post(url)
+            .header("user-agent", "Europe/2.1.0 (iPad; iOS 18.5; Scale/2.00)")
             .header("accept", "application/json")
             .header("accept-encoding", "gzip")
             .header("region", &self.config.region)
             .header("tenant-id", &self.config.tenant_id)
             .header("user-type", "app")
             .header("app-language-type", "en")
-            .header("app-send-date", timestamp)
             .header("app-content-encrypted", "1")
-            .header("app-verification-string", verification)
-            .header("original-content-type", protocol::FORM)
-            .body(body)
-            .build()
-            .map_err(Error::transport)
     }
 
     // The same login flow is exercised offline by supplying a fake exchange.

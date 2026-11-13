@@ -1,7 +1,7 @@
 # SAIC Rust client
 
-A Rust client for the SAIC MG iSMART API. Login is implemented; vehicle data and
-commands will follow. We'll build the web service in a separate repository and
+A Rust client for the SAIC MG iSMART API. Login and bounded vehicle/charging command transport are implemented.
+Vehicle reads and individual feature helpers will follow. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -29,6 +29,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 
 ## Documentation
 
+- [Command transport](docs/commands.md): envelopes, deadlines and unknown outcomes.
 - [Login specification](docs/login.md): API behavior, failure cases, and tests.
 - [Technical design](docs/technical-design.md): what belongs in the client,
   how the protocol works, and what to build and test first.
@@ -70,6 +71,8 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `help` | Show commands |
 | `status` | Show local session expiry without making a request |
 | `login` | Log in again using the same credentials |
+| `vehicle-command VIN JSON` | Submit an explicit vehicle control payload |
+| `charging-command VIN JSON` | Submit an explicit charging control payload |
 | `logout` | Forget the local session without contacting SAIC |
 | `exit` or `quit` | Exit; EOF and Ctrl-C also exit |
 
@@ -77,8 +80,20 @@ The CLI reads `.env` from the current directory without searching parent
 directories or loading values into the process environment. It doesn't take
 account credentials directly from shell variables. If startup login fails, it
 exits; a failed interactive `login` leaves the prompt available for another try.
-There are no automatic retries or background requests. Vehicle commands will
-follow as the client gains support for them.
+There are no automatic retries after transport failures or background requests.
+Command continuation uses only the same server event ID; commands never refresh
+vehicle or charging status. Unknown outcomes must not be blindly replayed.
+
+Payload syntax (synthetic VIN; only execute against a vehicle when intended):
+
+```text
+vehicle-command SYNTHETICVIN00001 {"rvcReqType":"0","rvcParams":[{"paramId":1,"paramValue":"AQ=="},{"paramId":2,"paramValue":"AA=="},{"paramId":3,"paramValue":"AQ=="},{"paramId":255,"paramValue":"AAAAAA=="}]}
+charging-command SYNTHETICVIN00001 {"chrgCtrlReq":1,"tboxEleccLckCtrlReq":0,"tboxV2XReq":0}
+```
+
+The vehicle example requests lights without horn; the charging example requests
+charging. All fields are caller-supplied protocol values. The CLI prints the
+outcome and code with identifiers and response data redacted.
 
 Use `cargo run --example cli -- --help` to see usage without reading `.env` or
 logging in. The old one-shot login example is replaced by this CLI.

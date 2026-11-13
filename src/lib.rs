@@ -21,11 +21,15 @@
 #![forbid(unsafe_code)]
 
 mod client;
+mod command;
 mod config;
 mod error;
 mod protocol;
 
 pub use client::SaicClient;
+pub use command::{
+    Command, CommandOptions, CommandOutcome, CommandState, ControlParameter, UnknownReason,
+};
 pub use config::{ClientConfig, Credentials};
 pub use error::{ApiFailure, Error};
 

@@ -162,3 +162,28 @@ fn rejects_incomplete_encryption_headers_and_invalid_ciphertext() {
         ));
     }
 }
+
+#[test]
+fn authenticated_command_matches_independent_python_vector() {
+    let v: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/command.json")).unwrap();
+    let (body, mac) = encrypt_authenticated(
+        v["path"].as_str().unwrap(),
+        v["timestamp"].as_str().unwrap(),
+        v["tenant"].as_str().unwrap(),
+        v["token"].as_str().unwrap(),
+        "application/json",
+        v["plaintext"].as_str().unwrap(),
+    );
+    assert_eq!(body, v["body"]);
+    assert_eq!(mac, v["verification"]);
+    let command = crate::Command::Charging {
+        charging: 1,
+        port_lock: 0,
+        v2x: 0,
+    };
+    assert_eq!(
+        command.body(v["vin"].as_str().unwrap()).unwrap(),
+        v["plaintext"]
+    );
+}

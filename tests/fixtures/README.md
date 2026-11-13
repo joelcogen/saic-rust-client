@@ -19,3 +19,12 @@ All other inputs and outputs are recorded in the JSON.
 Keep these expected outputs independent of the Rust implementation. Regenerate
 them with the pinned Python source if the inputs change. See
 [Third party notices](../../THIRD_PARTY_NOTICES.md) for its license.
+
+## Command vector
+
+`command.json` contains only synthetic data. It was generated with Python
+`hashlib`, `hmac` and `cryptography` AES-CBC/PKCS7, following `net/crypto.py` at
+`5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`. Its plaintext uses compact, sorted
+JSON; the token is included in the key prefix and HMAC input. The VIN hash is
+SHA-256 of `SYNTHETICVIN00001`. The generator is `generate_command.py` and does
+not make network requests.

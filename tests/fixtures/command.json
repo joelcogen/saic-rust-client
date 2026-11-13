@@ -1,0 +1,10 @@
+{
+  "path": "/vehicle/charging/control",
+  "timestamp": "1700000000000",
+  "tenant": "459771",
+  "token": "synthetic-command-token",
+  "vin": "SYNTHETICVIN00001",
+  "plaintext": "{\"chrgCtrlReq\":1,\"tboxEleccLckCtrlReq\":0,\"tboxV2XReq\":0,\"vin\":\"db78889dc390d86be94a178ffc814121709616fdf341739a0db7619a5d800378\"}",
+  "body": "4ff96e35d6b6f094f234372a1622856c65c03b8b16fc345e394fc8a0b521ef4b8dc09156c222429cd56eda2378190672fce27d616668edfb78ae4795635f3d9a0f81af35494c97c8d41bbf2152f4ad14d40a7e74df581e09ef68dba9eb6c035970c319fef11a1bbf43c96d84f6e3c4f381394bdd9fb6cf1c195cf0daff4ee42e4fa1e020e4243531f8f9974ced3ceb50",
+  "verification": "49907ef0bcd8136f32768118c372ee1f6e70651ab4a53ea304ee5893913a3628"
+}
