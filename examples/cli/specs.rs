@@ -8,6 +8,7 @@ struct FakeSession {
     fail_commands: bool,
     payloads: Vec<serde_json::Value>,
     reads: Vec<(ReadCommand, String)>,
+    commands_at_read: Vec<usize>,
     fail_reads: bool,
     logged_in: bool,
     fail_on: Option<usize>,
@@ -24,6 +25,7 @@ impl Session for FakeSession {
     }
 
     async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error> {
+        self.commands_at_read.push(self.commands);
         self.reads.push((operation, vin.to_owned()));
         if self.fail_reads {
             Err(Error::Timeout)
@@ -1145,5 +1147,76 @@ async fn message_commands_require_explicit_arguments_and_never_refresh() {
         "news-list",
     ] {
         assert!(HELP.contains(command));
+    }
+}
+
+#[tokio::test]
+async fn mixed_controls_refresh_only_when_caller_requests_it() {
+    for fail in [false, true] {
+        let mut session = FakeSession {
+            fail_commands: fail,
+            ..Default::default()
+        };
+        let input = b"seat-heat SYNTHETICVIN front-left 1\nseat-heat SYNTHETICVIN front-right 3\nac-stop SYNTHETICVIN\ncharging-stop SYNTHETICVIN\nvehicle-live SYNTHETICVIN\nexit\n";
+        run_session(&mut session, input.as_slice(), Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(session.commands, 4);
+        assert_eq!(session.commands_at_read, vec![4]);
+        assert_eq!(
+            session.reads,
+            vec![(ReadCommand::Live, "SYNTHETICVIN".into())]
+        );
+        for (index, id, value) in [(0, 17, "AQ=="), (1, 18, "Aw==")] {
+            assert_eq!(session.payloads[index]["rvcReqType"], "5");
+            assert_eq!(
+                session.payloads[index]["rvcParams"],
+                serde_json::json!([
+                    {"paramId": id, "paramValue": value},
+                    {"paramId": 255, "paramValue": "AAAAAA=="}
+                ])
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn seat_inputs_are_validated_before_dispatch() {
+    let mut session = FakeSession::default();
+    let input = b"seat-heat VIN both 3\nseat-heat VIN front-left -1\nseat-heat VIN front-right 4\nseat-heat VIN rear-left 1\nseat-heat VIN rear-right 2\nseat-heat VIN front-left 1 extra\nseat-heat VIN rear-left 3\nseat-heat VIN rear-right 0\n";
+    run_session(&mut session, input.as_slice(), Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(session.commands, 2);
+    assert!(session.reads.is_empty());
+    assert_eq!(session.payloads[0]["rvcParams"][0]["paramId"], 25);
+    assert_eq!(session.payloads[1]["rvcParams"][0]["paramId"], 26);
+}
+
+#[test]
+fn documented_cli_commands_match_help_and_dispatch() {
+    let readme = include_str!("../../README.md");
+    let source = include_str!("../cli.rs");
+    let dispatch = source.split("async fn run_session(").nth(1).unwrap();
+    for line in readme.lines().filter(|line| line.starts_with("| `")) {
+        let name = line
+            .trim_start_matches("| `")
+            .split([' ', '`'])
+            .next()
+            .unwrap();
+        assert!(HELP.contains(name), "{name} missing from help");
+        assert!(
+            dispatch.contains(&format!("\"{name}\"")) || dispatch.contains(&format!("\"{name} ")),
+            "{name} missing from dispatch"
+        );
+    }
+    for line in HELP.lines() {
+        let name = line.split_whitespace().next().unwrap_or("");
+        if name.chars().all(|c| c.is_ascii_lowercase() || c == '-') && !name.is_empty() {
+            assert!(
+                readme.contains(&format!("`{name}")),
+                "{name} missing from README"
+            );
+        }
     }
 }

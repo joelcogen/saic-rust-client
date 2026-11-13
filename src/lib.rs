@@ -39,7 +39,7 @@ mod windows;
 pub use alarm::{AlarmSwitch, AlarmType};
 pub use charging::{ChargeCurrentLimit, ScheduleTime, ScheduledChargingMode, TargetBatterySoc};
 pub use client::SaicClient;
-pub use climate::TemperatureProfile;
+pub use climate::{HeatedSeat, TemperatureProfile};
 pub use command::{
     Command, CommandOptions, CommandOutcome, CommandState, ControlParameter, UnknownReason,
 };

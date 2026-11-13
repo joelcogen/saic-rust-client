@@ -29,6 +29,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 
 ## Documentation
 
+- [Command coverage audit](docs/command-coverage.md): pinned source mappings, omissions and refresh regressions.
 - [Messages and command history](docs/messages.md): explicit pagination, unread counts and typed status actions.
 - [Alarm switches](docs/alarms.md): explicit flags, supported types and legacy geofence intent.
 - [Windows and sunroof](docs/windows.md): selectors, all-door actions and model limitations.
@@ -107,6 +108,7 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `defrost-start VIN` | Start front defrost |
 | `defrost-stop VIN` | Stop AC, including front defrost |
 | `ac-temperature VIN PROFILE CELSIUS` | Reissue AC start, even for an unchanged target |
+| `seat-heat VIN front-left/front-right/rear-left/rear-right LEVEL` | Change one seat only; front 0–3, rear 0/off or 3/on; both seats require separate commands |
 | `rear-window-heat VIN on/off` | Turn rear-window heating on or off |
 | `steering-wheel-heat VIN on/off` | Turn steering-wheel heating on or off |
 | `climate-control VIN FAN AC INDEX` | Explicit protocol bytes (0–255); AC is `on`, `off`, or `omit` |

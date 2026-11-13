@@ -28,7 +28,37 @@ impl TemperatureProfile {
     }
 }
 
+/// Physical seat position; no driver-side inference is made.
+#[derive(Clone, Copy, Debug)]
+pub enum HeatedSeat {
+    FrontLeft = 17,
+    FrontRight = 18,
+    RearLeft = 25,
+    RearRight = 26,
+}
+
 impl Command {
+    /// Set exactly one seat. Front levels are 0..=3; rear seats use 0/off or 3/on.
+    /// Vehicle support is caller-owned; no state is fetched or preserved implicitly.
+    pub fn control_heated_seat(seat: HeatedSeat, level: i16) -> Result<Self, Error> {
+        if !(0..=3).contains(&level)
+            || (matches!(seat, HeatedSeat::RearLeft | HeatedSeat::RearRight)
+                && !matches!(level, 0 | 3))
+        {
+            return Err(Error::Configuration("invalid heated seat level"));
+        }
+        Ok(Self::Vehicle {
+            request_type: "5".into(),
+            parameters: vec![
+                byte_parameter(seat as u8, level as u8),
+                ControlParameter {
+                    id: 255,
+                    value: "AAAAAA==".into(),
+                },
+            ],
+        })
+    }
+
     /// Turn only the rear-window heater on or off. No status refresh is implicit.
     pub fn set_rear_window_heater(enabled: bool) -> Self {
         Self::Vehicle {
@@ -130,6 +160,36 @@ fn byte_parameter(id: u8, value: u8) -> ControlParameter {
 mod specs {
     use super::*;
     use serde_json::Value;
+
+    #[test]
+    fn every_seat_level_has_only_the_selected_parameter_and_marker() {
+        for (seat, id, rear) in [
+            (HeatedSeat::FrontLeft, 17, false),
+            (HeatedSeat::FrontRight, 18, false),
+            (HeatedSeat::RearLeft, 25, true),
+            (HeatedSeat::RearRight, 26, true),
+        ] {
+            for (level, encoded) in ["AA==", "AQ==", "Ag==", "Aw=="].iter().enumerate() {
+                let command = Command::control_heated_seat(seat, level as i16);
+                if rear && matches!(level, 1 | 2) {
+                    assert!(command.is_err());
+                } else {
+                    let payload = serde_json::to_value(command.unwrap()).unwrap();
+                    assert_eq!(payload["rvcReqType"], "5");
+                    assert_eq!(
+                        payload["rvcParams"],
+                        serde_json::json!([
+                            {"paramId": id, "paramValue": encoded},
+                            {"paramId": 255, "paramValue": "AAAAAA=="}
+                        ])
+                    );
+                }
+            }
+            for level in [-1, 4, 256] {
+                assert!(Command::control_heated_seat(seat, level).is_err());
+            }
+        }
+    }
 
     #[test]
     fn independent_heaters_match_exact_reference_fixtures() {

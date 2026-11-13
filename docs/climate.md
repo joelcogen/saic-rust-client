@@ -96,3 +96,12 @@ refresh requests are not ported.
 Synthetic `heaters.json` fixtures cover both states and exact parameter lists.
 Offline transport tests cover same-command continuation and failure, and CLI
 specs cover dispatch, invalid arguments and absence of implicit reads.
+
+## Single-seat heating
+
+`Command::control_heated_seat(HeatedSeat, level)` sends type 5 with only the
+selected physical seat (17/18/25/26) and marker 255. Front levels are 0–3; rear
+levels are 0/off or 3/on. The CLI is `seat-heat VIN SEAT LEVEL`, with `front-left`,
+`front-right`, `rear-left` or `rear-right`. Two seats require two commands. No
+status read or cached other-seat value is used, even on failure. Model support
+is caller-owned; see the [coverage audit](command-coverage.md) for source evidence.

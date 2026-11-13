@@ -8,8 +8,8 @@ use std::{
 
 use saic_client::{
     AlarmSwitch, ChargeCurrentLimit, ClientConfig, Command, CommandOutcome, Credentials,
-    DoorWindowsAction, Error, FindCarMode, LockAction, MessageAction, MessageGroup, MessageId,
-    SaicClient, TailgateAction, TargetBatterySoc, TemperatureProfile, VehicleLockId,
+    DoorWindowsAction, Error, FindCarMode, HeatedSeat, LockAction, MessageAction, MessageGroup,
+    MessageId, SaicClient, TailgateAction, TargetBatterySoc, TemperatureProfile, VehicleLockId,
     VehicleWindowId,
 };
 
@@ -62,6 +62,7 @@ const HELP: &str = "Commands:
   defrost-start VIN            Start front defrost
   defrost-stop VIN             Stop AC (including front defrost)
   ac-temperature VIN PROFILE CELSIUS  Reissue AC start at target
+  seat-heat VIN front-left|front-right|rear-left|rear-right LEVEL  Front 0..3; rear 0 or 3
   rear-window-heat VIN on|off  Set rear-window heater
   steering-wheel-heat VIN on|off  Set steering-wheel heater
   climate-control VIN FAN AC INDEX    Protocol bytes 0..255; AC on/off/omit
@@ -406,6 +407,7 @@ fn is_climate_command(line: &str) -> bool {
                 | "defrost-stop"
                 | "ac-temperature"
                 | "climate-control"
+                | "seat-heat"
                 | "rear-window-heat"
                 | "steering-wheel-heat"
         )
@@ -416,6 +418,18 @@ fn parse_climate(line: &str) -> Result<(&str, Command), &'static str> {
     let parts: Vec<_> = line.split_whitespace().collect();
     let number = |s: &str| s.parse::<i16>().map_err(|_| "Expected an integer");
     let command = match parts.as_slice() {
+        ["seat-heat", _, seat, level] => {
+            let seat = match *seat {
+                "front-left" => HeatedSeat::FrontLeft,
+                "front-right" => HeatedSeat::FrontRight,
+                "rear-left" => HeatedSeat::RearLeft,
+                "rear-right" => HeatedSeat::RearRight,
+                _ => return Err("Expected a physical seat position"),
+            };
+            Command::control_heated_seat(seat, number(level)?)
+                .map_err(|_| "Front levels must be 0..3; rear levels 0 or 3")?
+        }
+
         [operation @ ("rear-window-heat" | "steering-wheel-heat"), _, state] => {
             let enabled = match *state {
                 "on" => true,

@@ -1384,3 +1384,70 @@ async fn messages_use_exact_single_requests_for_pages_counts_and_actions() {
         assert!(serde_json::from_value::<crate::models::MessageResp>(bad).is_err());
     }
 }
+
+#[tokio::test(start_paused = true)]
+async fn mixed_controls_then_one_explicit_refresh_use_only_requested_endpoints() {
+    use crate::{Command, CommandState, HeatedSeat};
+    for fail in [false, true] {
+        let mut client = authenticated().await;
+        let mut paths = Vec::new();
+        for command in [
+            Command::control_heated_seat(HeatedSeat::FrontLeft, 1).unwrap(),
+            Command::control_heated_seat(HeatedSeat::FrontRight, 3).unwrap(),
+            Command::stop_ac(),
+            Command::control_charging(true),
+        ] {
+            let mut calls = 0;
+            let outcome = client
+                .command_with(
+                    "SYNTHETICVIN",
+                    &command,
+                    Default::default(),
+                    std::future::pending(),
+                    |request| {
+                        paths.push(request.url().path().to_owned());
+                        assert_eq!(
+                            request.url().path(),
+                            format!("/api.app/v1{}", command.path())
+                        );
+                        calls += 1;
+                        assert_eq!(
+                            request.headers()["event-id"],
+                            if calls == 1 { "0" } else { "synthetic-event" }
+                        );
+                        let response = if calls == 1 {
+                            Ok(reply(1, Some("synthetic-event"), false))
+                        } else if fail {
+                            Err(Error::Transport)
+                        } else {
+                            Ok(reply(0, None, true))
+                        };
+                        async { response }
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(calls, 2);
+            assert_eq!(matches!(outcome.state, CommandState::Completed), !fail);
+        }
+        assert_eq!(paths.len(), 8);
+        assert!(paths.iter().all(|path| path.ends_with("/control")));
+        let operation = crate::reads::Read::Live.operation("SYNTHETICVIN").unwrap();
+        let outcome = client
+            .operation_with(
+                &operation,
+                Default::default(),
+                std::future::pending(),
+                |request| {
+                    assert_eq!(request.method(), "GET");
+                    paths.push(request.url().path().to_owned());
+                    async { Ok(reply(0, None, true)) }
+                },
+            )
+            .await
+            .unwrap();
+        SaicClient::read_result::<crate::models::VehicleStatusResp>(outcome).unwrap();
+        assert_eq!(paths.len(), 9);
+        assert_eq!(paths.last().unwrap(), "/api.app/v1/vehicle/status");
+    }
+}
