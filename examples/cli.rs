@@ -23,6 +23,8 @@ const HELP: &str = "Commands:
   defrost-start VIN            Start front defrost
   defrost-stop VIN             Stop AC (including front defrost)
   ac-temperature VIN PROFILE CELSIUS  Reissue AC start at target
+  rear-window-heat VIN on|off  Set rear-window heater
+  steering-wheel-heat VIN on|off  Set steering-wheel heater
   climate-control VIN FAN AC INDEX    Protocol bytes 0..255; AC on/off/omit
   PROFILE is standard, eh32, or mzs3e; Celsius must fit that profile
   vehicles                   Discover vehicles and capabilities
@@ -288,6 +290,8 @@ fn is_climate_command(line: &str) -> bool {
                 | "defrost-stop"
                 | "ac-temperature"
                 | "climate-control"
+                | "rear-window-heat"
+                | "steering-wheel-heat"
         )
     )
 }
@@ -296,6 +300,18 @@ fn parse_climate(line: &str) -> Result<(&str, Command), &'static str> {
     let parts: Vec<_> = line.split_whitespace().collect();
     let number = |s: &str| s.parse::<i16>().map_err(|_| "Expected an integer");
     let command = match parts.as_slice() {
+        [operation @ ("rear-window-heat" | "steering-wheel-heat"), _, state] => {
+            let enabled = match *state {
+                "on" => true,
+                "off" => false,
+                _ => return Err("Expected on or off"),
+            };
+            if *operation == "rear-window-heat" {
+                Command::set_rear_window_heater(enabled)
+            } else {
+                Command::set_steering_wheel_heater(enabled)
+            }
+        }
         ["ac-stop", _] => Command::stop_ac(),
         ["ac-blowing", _] => Command::start_ac_blowing(),
         ["defrost-start", _] => Command::start_front_defrost(),

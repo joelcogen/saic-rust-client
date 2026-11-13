@@ -66,3 +66,33 @@ boundaries. Rust tests cover invalid values, all Celsius targets, command
 continuation and transport failure; CLI fake-session tests check dispatch,
 repeated targets, malformed arguments, and absence of implicit reads. No
 production calls are needed. See [third-party notices](../THIRD_PARTY_NOTICES.md).
+
+## Rear-window and steering-wheel heaters
+
+`Command::set_rear_window_heater(enabled)` and
+`Command::set_steering_wheel_heater(enabled)` accept a boolean for explicit on/off.
+They use the same `execute_command` transport. Each affects only its selected
+heater, with no cabin climate or seat parameters and no implicit status reads,
+including on failure. Only continuation of that same command is automatic.
+The caller owns refresh timing; no existing vehicle state is needed.
+
+| Heater | Request type | Parameter | Marker |
+| --- | --- | --- | --- |
+| Rear window | `32` | 23, one byte (1 on, 0 off) | 255, four zero bytes |
+| Steering wheel | `8` | 24, one byte (1 on, 0 off) | None |
+
+CLI equivalents are `rear-window-heat VIN on` / `off` and
+`steering-wheel-heat VIN on` / `off`.
+
+Rear-window behavior matches the pinned client's `control_rear_window_heat`
+and `api/vehicle/schema.py`. Steering-wheel behavior follows gateway
+`ec814eca135792d8202dfd29d6e443b53746d2a1`,
+`src/handlers/command/climate/climate_steering_wheel_heat.py`.
+The pinned client agrees on type 8, parameter 24 and the boolean byte but adds
+`PARAMS_MAX`; we deliberately omit it to match the primary gateway reference.
+The gateway's local `src/saic_api.py` changes only seat controls. Its handlers'
+refresh requests are not ported.
+
+Synthetic `heaters.json` fixtures cover both states and exact parameter lists.
+Offline transport tests cover same-command continuation and failure, and CLI
+specs cover dispatch, invalid arguments and absence of implicit reads.

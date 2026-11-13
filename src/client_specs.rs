@@ -759,6 +759,10 @@ async fn climate_modes_only_continue_the_same_command_on_success_or_failure() {
     use crate::{Command, TemperatureProfile};
     for command in [
         Command::start_ac(TemperatureProfile::Eh32, 17).unwrap(),
+        Command::set_rear_window_heater(false),
+        Command::set_rear_window_heater(true),
+        Command::set_steering_wheel_heater(false),
+        Command::set_steering_wheel_heater(true),
         Command::stop_ac(),
         Command::start_ac_blowing(),
         Command::start_front_defrost(),

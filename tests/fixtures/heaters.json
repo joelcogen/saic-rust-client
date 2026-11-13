@@ -1,0 +1,62 @@
+[
+  {
+    "heater": "rear-window",
+    "enabled": false,
+    "payload": {
+      "rvcReqType": "32",
+      "rvcParams": [
+        {
+          "paramId": 23,
+          "paramValue": "AA=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "heater": "rear-window",
+    "enabled": true,
+    "payload": {
+      "rvcReqType": "32",
+      "rvcParams": [
+        {
+          "paramId": 23,
+          "paramValue": "AQ=="
+        },
+        {
+          "paramId": 255,
+          "paramValue": "AAAAAA=="
+        }
+      ]
+    }
+  },
+  {
+    "heater": "steering-wheel",
+    "enabled": false,
+    "payload": {
+      "rvcReqType": "8",
+      "rvcParams": [
+        {
+          "paramId": 24,
+          "paramValue": "AA=="
+        }
+      ]
+    }
+  },
+  {
+    "heater": "steering-wheel",
+    "enabled": true,
+    "payload": {
+      "rvcReqType": "8",
+      "rvcParams": [
+        {
+          "paramId": 24,
+          "paramValue": "AQ=="
+        }
+      ]
+    }
+  }
+]

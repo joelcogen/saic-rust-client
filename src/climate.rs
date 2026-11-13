@@ -29,6 +29,29 @@ impl TemperatureProfile {
 }
 
 impl Command {
+    /// Turn only the rear-window heater on or off. No status refresh is implicit.
+    pub fn set_rear_window_heater(enabled: bool) -> Self {
+        Self::Vehicle {
+            request_type: "32".into(),
+            parameters: vec![
+                byte_parameter(23, u8::from(enabled)),
+                ControlParameter {
+                    id: 255,
+                    value: "AAAAAA==".into(),
+                },
+            ],
+        }
+    }
+
+    /// Turn only the steering-wheel heater on or off, without a PARAMS_MAX marker.
+    /// Follows the gateway payload; no status refresh is implicit.
+    pub fn set_steering_wheel_heater(enabled: bool) -> Self {
+        Self::Vehicle {
+            request_type: "8".into(),
+            parameters: vec![byte_parameter(24, u8::from(enabled))],
+        }
+    }
+
     /// Start AC at an explicit whole-degree Celsius target.
     pub fn start_ac(profile: TemperatureProfile, celsius: i16) -> Result<Self, Error> {
         Self::control_climate(2, None, i16::from(profile.encode(celsius)?))
@@ -107,6 +130,25 @@ fn byte_parameter(id: u8, value: u8) -> ControlParameter {
 mod specs {
     use super::*;
     use serde_json::Value;
+
+    #[test]
+    fn independent_heaters_match_exact_reference_fixtures() {
+        let fixtures: Value =
+            serde_json::from_str(include_str!("../tests/fixtures/heaters.json")).unwrap();
+        assert_eq!(fixtures.as_array().unwrap().len(), 4);
+        for case in fixtures.as_array().unwrap() {
+            let enabled = case["enabled"].as_bool().unwrap();
+            let command = match case["heater"].as_str().unwrap() {
+                "rear-window" => Command::set_rear_window_heater(enabled),
+                "steering-wheel" => Command::set_steering_wheel_heater(enabled),
+                _ => panic!("unknown heater"),
+            };
+            let mut body: Value =
+                serde_json::from_str(&command.body("SYNTHETICVIN").unwrap()).unwrap();
+            body.as_object_mut().unwrap().remove("vin");
+            assert_eq!(body, case["payload"]);
+        }
+    }
 
     #[test]
     fn payloads_match_independent_python_fixtures() {

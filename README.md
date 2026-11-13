@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport and cabin climate controls are implemented. We'll build the web service in a separate repository and
+transport, cabin climate, rear-window and steering-wheel heating controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -81,6 +81,8 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `defrost-start VIN` | Start front defrost |
 | `defrost-stop VIN` | Stop AC, including front defrost |
 | `ac-temperature VIN PROFILE CELSIUS` | Reissue AC start, even for an unchanged target |
+| `rear-window-heat VIN on/off` | Turn rear-window heating on or off |
+| `steering-wheel-heat VIN on/off` | Turn steering-wheel heating on or off |
 | `climate-control VIN FAN AC INDEX` | Explicit protocol bytes (0–255); AC is `on`, `off`, or `omit` |
 | `vehicles` | Discover account vehicles and model capabilities |
 | `vehicle-cache VIN` | Read SAIC's cached status only |

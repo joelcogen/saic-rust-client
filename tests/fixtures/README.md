@@ -46,3 +46,12 @@ Temperature profile ranges come from the gateway revision recorded in
 [climate documentation](../../docs/climate.md). Invalid inputs are tested in
 Rust and CLI specs; they never produce a request. Attribution is in
 [third-party notices](../../THIRD_PARTY_NOTICES.md).
+
+## Independent heaters
+
+Regenerate `heaters.json` with `python3 tests/fixtures/generate_heaters.py`
+(standard library only, no network). It covers on/off payloads for rear-window
+and steering-wheel heating, including marker presence and absence. Sources and
+the intentional steering-wheel difference from the pinned client are recorded
+in [climate documentation](../../docs/climate.md) and the generator. All inputs
+are synthetic; expected payloads are independent of the Rust implementation.

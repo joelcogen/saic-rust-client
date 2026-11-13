@@ -322,3 +322,58 @@ async fn invalid_climate_inputs_never_reach_session_commands() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn independent_heaters_dispatch_exact_payloads_without_reads_even_on_failure() {
+    let fixtures: Vec<serde_json::Value> =
+        serde_json::from_str(include_str!("../../tests/fixtures/heaters.json")).unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let mut input = String::new();
+        for case in &fixtures {
+            let name = format!("{}-heat", case["heater"].as_str().unwrap());
+            assert!(HELP.contains(&name));
+            let state = if case["enabled"].as_bool().unwrap() {
+                "on"
+            } else {
+                "off"
+            };
+            input.push_str(&format!("{name} SYNTHETICVIN {state}\n"));
+        }
+        run_session(&mut client, input.as_bytes(), &mut Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(client.commands, 4);
+        assert_eq!(client.logins, 1);
+        assert!(client.reads.is_empty());
+        for (mut actual, case) in client.payloads.into_iter().zip(&fixtures) {
+            assert_eq!(
+                actual.as_object_mut().unwrap().remove("kind"),
+                Some(serde_json::json!("Vehicle"))
+            );
+            assert_eq!(actual, case["payload"]);
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_heater_arguments_never_send() {
+    let mut input = String::new();
+    for name in ["rear-window-heat", "steering-wheel-heat"] {
+        for args in ["", "vin", "vin omit", "vin true", "vin 1", "vin on extra"] {
+            let line = format!("{name} {args}");
+            assert!(parse_climate(&line).is_err());
+            input.push_str(&line);
+            input.push('\n');
+        }
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, input.as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}
