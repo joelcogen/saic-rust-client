@@ -155,3 +155,149 @@ mod specs {
         }
     }
 }
+
+/// Vehicle schedule wall-clock time, with minute precision and no timezone conversion.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ScheduleTime {
+    hour: u8,
+    minute: u8,
+}
+
+impl ScheduleTime {
+    pub fn new(hour: u8, minute: u8) -> Result<Self, crate::Error> {
+        if hour > 23 || minute > 59 {
+            return Err(crate::Error::Configuration(
+                "schedule time must be 00:00 through 23:59",
+            ));
+        }
+        Ok(Self { hour, minute })
+    }
+}
+
+impl std::str::FromStr for ScheduleTime {
+    type Err = crate::Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let b = value.as_bytes();
+        if b.len() != 5 || b[2] != b':' || ![b[0], b[1], b[3], b[4]].iter().all(u8::is_ascii_digit)
+        {
+            return Err(crate::Error::Configuration("schedule time must be HH:MM"));
+        }
+        Self::new(
+            (b[0] - b'0') * 10 + b[1] - b'0',
+            (b[3] - b'0') * 10 + b[4] - b'0',
+        )
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(u8)]
+pub enum ScheduledChargingMode {
+    UntilConfiguredTime = 1,
+    Disabled = 2,
+    UntilConfiguredSoc = 3,
+}
+
+impl std::str::FromStr for ScheduledChargingMode {
+    type Err = crate::Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "until-configured-time" => Ok(Self::UntilConfiguredTime),
+            "disabled" => Ok(Self::Disabled),
+            "until-configured-soc" => Ok(Self::UntilConfiguredSoc),
+            _ => Err(crate::Error::Configuration(
+                "invalid charging schedule mode",
+            )),
+        }
+    }
+}
+
+impl Command {
+    /// Configure the vehicle's schedule, including disabling it. Both times are
+    /// explicit even when disabled or charging until the already configured SoC.
+    /// Overnight and equal bounds pass through; no host scheduling or refresh occurs.
+    /// `supports_target_soc` is caller-supplied; unknown support must be false.
+    pub fn set_schedule_charging(
+        start: ScheduleTime,
+        end: ScheduleTime,
+        mode: ScheduledChargingMode,
+        supports_target_soc: bool,
+    ) -> Result<Self, crate::Error> {
+        if mode == ScheduledChargingMode::UntilConfiguredSoc && !supports_target_soc {
+            return Err(crate::Error::Unsupported(
+                "until-configured-SoC requires target SoC support",
+            ));
+        }
+        Ok(Self::ChargingSchedule {
+            start_hour: start.hour,
+            start_minute: start.minute,
+            end_hour: end.hour,
+            end_minute: end.minute,
+            public_station: 1,
+            mode: mode as u8,
+            supports_target_soc,
+        })
+    }
+}
+
+#[cfg(test)]
+mod schedule_specs {
+    use super::*;
+
+    #[test]
+    fn schedule_validation_includes_raw_command_payloads() {
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/fixtures/charge_schedule.json")).unwrap();
+        for value in fixture["invalid_times"].as_array().unwrap() {
+            assert!(value.as_str().unwrap().parse::<ScheduleTime>().is_err());
+        }
+        for (h, m) in [(24, 0), (0, 60), (255, 255)] {
+            assert!(ScheduleTime::new(h, m).is_err());
+        }
+        let start = "22:00".parse().unwrap();
+        let end = "06:00".parse().unwrap();
+        assert!(matches!(
+            Command::set_schedule_charging(
+                start,
+                end,
+                ScheduledChargingMode::UntilConfiguredSoc,
+                false
+            ),
+            Err(crate::Error::Unsupported(_))
+        ));
+        for (field, value) in [
+            ("rsvanStHour", 24),
+            ("rsvanSpHour", 24),
+            ("rsvanStMintue", 60),
+            ("rsvanSpMintue", 60),
+            ("tboxReserCtrlReq", 0),
+            ("tboxReserCtrlReq", 4),
+            ("tboxAdpPubChrgSttnReq", 0),
+        ] {
+            let mut payload = fixture["actions"][0]["payload"].clone();
+            payload["kind"] = "ChargingSchedule".into();
+            payload["supports_target_soc"] = true.into();
+            payload[field] = value.into();
+            let command: Command = serde_json::from_value(payload).unwrap();
+            assert!(command.body("SYNTHETICVIN").is_err());
+        }
+        let mut payload = fixture["actions"][8]["payload"].clone();
+        payload["kind"] = "ChargingSchedule".into();
+        payload["supports_target_soc"] = false.into();
+        let command: Command = serde_json::from_value(payload).unwrap();
+        assert!(matches!(
+            command.body("SYNTHETICVIN"),
+            Err(crate::Error::Unsupported(_))
+        ));
+        for mode in [
+            ScheduledChargingMode::Disabled,
+            ScheduledChargingMode::UntilConfiguredTime,
+        ] {
+            assert!(Command::set_schedule_charging(start, end, mode, false)
+                .unwrap()
+                .body("SYNTHETICVIN")
+                .is_ok());
+        }
+    }
+}

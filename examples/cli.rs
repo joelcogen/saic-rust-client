@@ -18,6 +18,7 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  charge-schedule VIN HH:MM HH:MM disabled|until-configured-time|until-configured-soc supported|unsupported  Set vehicle schedule; capability is target SoC support
   charge-target VIN PERCENT supported|unsupported  Set target; preserve current limit
   charge-current VIN 6A|8A|16A|MAX supported|unsupported  Set limit; preserve target
   charging-start VIN          Start charging
@@ -433,7 +434,8 @@ fn is_charging_control(line: &str) -> bool {
     matches!(
         line.split_whitespace().next(),
         Some(
-            "charge-target"
+            "charge-schedule"
+                | "charge-target"
                 | "charge-current"
                 | "charging-start"
                 | "charging-stop"
@@ -446,6 +448,20 @@ fn is_charging_control(line: &str) -> bool {
 fn parse_charging_control(line: &str) -> Result<(&str, Command), &'static str> {
     let parts: Vec<_> = line.split_whitespace().collect();
     match parts.as_slice() {
+        ["charge-schedule", vin, start, end, mode, capability] => {
+            let supported = match *capability {
+                "supported" => true,
+                "unsupported" => false,
+                _ => return Err("Target SoC capability must be supported or unsupported"),
+            };
+            let start = start.parse().map_err(|_| "Start must be HH:MM, 00:00 through 23:59")?;
+            let end = end.parse().map_err(|_| "End must be HH:MM, 00:00 through 23:59")?;
+            let mode = mode.parse().map_err(|_| "Mode must be disabled, until-configured-time or until-configured-soc")?;
+            let command = Command::set_schedule_charging(start, end, mode, supported)
+                .map_err(|_| "Unsupported: until-configured-soc requires target SoC support")?;
+            Ok((vin, command))
+        }
+        ["charge-schedule", ..] => Err("Expected charge-schedule VIN HH:MM HH:MM disabled|until-configured-time|until-configured-soc supported|unsupported"),
         [name @ ("charge-target" | "charge-current"), vin, value, capability] => {
             let supported = match *capability {
                 "supported" => true,

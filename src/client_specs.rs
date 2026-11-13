@@ -845,8 +845,24 @@ async fn charging_actions_preserve_details_and_only_continue_the_same_control() 
         });
         cases.push(case.clone());
     }
+    let schedules: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/charge_schedule.json")).unwrap();
+    for case in schedules["actions"].as_array().unwrap() {
+        commands.push(
+            crate::Command::set_schedule_charging(
+                case["start"].as_str().unwrap().parse().unwrap(),
+                case["end"].as_str().unwrap().parse().unwrap(),
+                case["mode"].as_str().unwrap().parse().unwrap(),
+                true,
+            )
+            .unwrap(),
+        );
+        cases.push(case.clone());
+    }
     for (command, case) in commands.iter().zip(&cases) {
-        let path = if case["cli"] == "charge-target" || case["cli"] == "charge-current" {
+        let path = if case["cli"] == "charge-schedule" {
+            "/vehicle/charging/reservation"
+        } else if case["cli"] == "charge-target" || case["cli"] == "charge-current" {
             "/vehicle/charging/setting"
         } else {
             "/vehicle/charging/control"

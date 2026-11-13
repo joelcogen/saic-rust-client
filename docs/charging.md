@@ -98,3 +98,63 @@ client preserve companions without cached state.
 fields and invalid user values. Offline transport specs exercise each payload
 through completion, rejection, continuation, transport failure and timeout;
 CLI specs check capability rejection, required arguments and absence of reads.
+
+## Charging schedules
+
+Use `Command::set_schedule_charging(start, end, mode, supports_target_soc)` and
+`execute_command` to configure the vehicle's own charging schedule. Parse each
+time as `ScheduleTime` (`HH:MM`), or construct it with `ScheduleTime::new(hour,
+minute)`. Hours are 0–23 and minutes 0–59. Seconds, dates and timezone offsets
+are not accepted. The wire format contains only hours and minutes: supply the
+wall-clock times expected by the vehicle. The client performs no host timezone,
+UTC or daylight-saving conversion and creates no host scheduler.
+
+| `ScheduledChargingMode` | CLI mode | Protocol code |
+| --- | --- | --- |
+| `Disabled` | `disabled` | 2 |
+| `UntilConfiguredTime` | `until-configured-time` | 1 |
+| `UntilConfiguredSoc` | `until-configured-soc` | 3 |
+
+Both start and end must be supplied in every mode, including disabled and
+until-configured-SoC; the client never fetches existing values. A start later
+than the end (for example 22:30–06:15) represents an overnight window and is
+sent unchanged. Midnight (00:00) is valid; 24:00 is not. Equal bounds also pass
+through, matching the pinned client; their physical interpretation belongs to
+the vehicle and is not assumed to mean either a full day or an empty window.
+Until-configured-SoC uses the vehicle's already configured target, without
+changing or reading it. The end time is still transmitted in that mode.
+
+`supports_target_soc` is explicit caller-supplied capability information, not a
+request to discover capabilities. Unknown support must be false. Selecting
+`UntilConfiguredSoc` with false returns `Error::Unsupported` before any request.
+Disabled and until-configured-time do not require target SoC support. This
+matches the gateway restriction, but returns an error instead of silently
+ignoring the request.
+
+```text
+charge-schedule SYNTHETICVIN 22:30 06:15 until-configured-time unsupported
+charge-schedule SYNTHETICVIN 00:00 06:00 until-configured-soc supported
+charge-schedule SYNTHETICVIN 22:30 06:15 disabled unsupported
+```
+
+The last argument declares target SoC support. The command posts to
+`/vehicle/charging/reservation`, with `rsvanStHour`, `rsvanStMintue`,
+`rsvanSpHour`, `rsvanSpMintue`, `tboxAdpPubChrgSttnReq: 1` and
+`tboxReserCtrlReq` set to the mode code. The `Mintue` spellings are protocol
+field names. Capability information is never sent to SAIC. Raw
+`Command::ChargingSchedule` payloads also validate times, mode, marker and
+capability before transport.
+
+No schedule command refreshes vehicle or charging status before, after or on
+failure. Only same-command event-ID continuation is allowed. Completion means
+API completion, not a verified schedule or charging state; unknown outcomes
+must not cause automatic replay.
+
+Sources: `set_schedule_charging`, `ScheduledChargingRequest` and
+`ScheduledChargingMode` in the pinned Python charging API linked above;
+gateway `drivetrain_charging_schedule.py` at
+`ec814eca135792d8202dfd29d6e443b53746d2a1`. The recorded local `src/saic_api.py`
+changes add no schedule override. Gateway cached-state updates and refreshes
+remain application responsibilities. Synthetic `charge_schedule.json` fixtures
+cover every mode, midnight, overnight and equal bounds, plus invalid times.
+Offline exchanges and CLI specs verify payloads, failures and no implicit reads.

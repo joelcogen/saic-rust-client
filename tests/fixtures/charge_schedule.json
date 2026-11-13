@@ -1,0 +1,186 @@
+{
+  "actions": [
+    {
+      "cli": "charge-schedule",
+      "start": "00:00",
+      "end": "23:59",
+      "mode": "disabled",
+      "payload": {
+        "rsvanStHour": 0,
+        "rsvanStMintue": 0,
+        "rsvanSpHour": 23,
+        "rsvanSpMintue": 59,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 2
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "23:59",
+      "end": "00:00",
+      "mode": "disabled",
+      "payload": {
+        "rsvanStHour": 23,
+        "rsvanStMintue": 59,
+        "rsvanSpHour": 0,
+        "rsvanSpMintue": 0,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 2
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "22:30",
+      "end": "06:15",
+      "mode": "disabled",
+      "payload": {
+        "rsvanStHour": 22,
+        "rsvanStMintue": 30,
+        "rsvanSpHour": 6,
+        "rsvanSpMintue": 15,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 2
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "00:00",
+      "end": "00:00",
+      "mode": "disabled",
+      "payload": {
+        "rsvanStHour": 0,
+        "rsvanStMintue": 0,
+        "rsvanSpHour": 0,
+        "rsvanSpMintue": 0,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 2
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "00:00",
+      "end": "23:59",
+      "mode": "until-configured-time",
+      "payload": {
+        "rsvanStHour": 0,
+        "rsvanStMintue": 0,
+        "rsvanSpHour": 23,
+        "rsvanSpMintue": 59,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 1
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "23:59",
+      "end": "00:00",
+      "mode": "until-configured-time",
+      "payload": {
+        "rsvanStHour": 23,
+        "rsvanStMintue": 59,
+        "rsvanSpHour": 0,
+        "rsvanSpMintue": 0,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 1
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "22:30",
+      "end": "06:15",
+      "mode": "until-configured-time",
+      "payload": {
+        "rsvanStHour": 22,
+        "rsvanStMintue": 30,
+        "rsvanSpHour": 6,
+        "rsvanSpMintue": 15,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 1
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "00:00",
+      "end": "00:00",
+      "mode": "until-configured-time",
+      "payload": {
+        "rsvanStHour": 0,
+        "rsvanStMintue": 0,
+        "rsvanSpHour": 0,
+        "rsvanSpMintue": 0,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 1
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "00:00",
+      "end": "23:59",
+      "mode": "until-configured-soc",
+      "payload": {
+        "rsvanStHour": 0,
+        "rsvanStMintue": 0,
+        "rsvanSpHour": 23,
+        "rsvanSpMintue": 59,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 3
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "23:59",
+      "end": "00:00",
+      "mode": "until-configured-soc",
+      "payload": {
+        "rsvanStHour": 23,
+        "rsvanStMintue": 59,
+        "rsvanSpHour": 0,
+        "rsvanSpMintue": 0,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 3
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "22:30",
+      "end": "06:15",
+      "mode": "until-configured-soc",
+      "payload": {
+        "rsvanStHour": 22,
+        "rsvanStMintue": 30,
+        "rsvanSpHour": 6,
+        "rsvanSpMintue": 15,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 3
+      }
+    },
+    {
+      "cli": "charge-schedule",
+      "start": "00:00",
+      "end": "00:00",
+      "mode": "until-configured-soc",
+      "payload": {
+        "rsvanStHour": 0,
+        "rsvanStMintue": 0,
+        "rsvanSpHour": 0,
+        "rsvanSpMintue": 0,
+        "tboxAdpPubChrgSttnReq": 1,
+        "tboxReserCtrlReq": 3
+      }
+    }
+  ],
+  "invalid_times": [
+    "",
+    "24:00",
+    "00:60",
+    "-1:00",
+    "12:-1",
+    "99:99",
+    "1:00",
+    "00:0",
+    "12:30:00",
+    "12:30Z",
+    "12:30+01:00",
+    "ab:cd"
+  ]
+}

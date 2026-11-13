@@ -32,7 +32,7 @@ pub mod models;
 mod protocol;
 mod reads;
 
-pub use charging::{ChargeCurrentLimit, TargetBatterySoc};
+pub use charging::{ChargeCurrentLimit, ScheduleTime, ScheduledChargingMode, TargetBatterySoc};
 pub use client::SaicClient;
 pub use climate::TemperatureProfile;
 pub use command::{

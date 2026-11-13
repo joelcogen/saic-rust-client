@@ -25,6 +25,23 @@ pub enum Command {
         #[serde(rename = "rvcParams")]
         parameters: Vec<ControlParameter>,
     },
+    ChargingSchedule {
+        #[serde(rename = "rsvanStHour")]
+        start_hour: u8,
+        #[serde(rename = "rsvanStMintue")]
+        start_minute: u8,
+        #[serde(rename = "rsvanSpHour")]
+        end_hour: u8,
+        #[serde(rename = "rsvanSpMintue")]
+        end_minute: u8,
+        #[serde(rename = "tboxAdpPubChrgSttnReq")]
+        public_station: u8,
+        #[serde(rename = "tboxReserCtrlReq")]
+        mode: u8,
+        /// Caller-supplied capability; never sent to SAIC.
+        #[serde(skip_serializing)]
+        supports_target_soc: bool,
+    },
     ChargingSettings {
         #[serde(rename = "onBdChrgTrgtSOCReq")]
         target_soc: u8,
@@ -46,6 +63,7 @@ pub enum Command {
 impl Command {
     pub(crate) fn path(&self) -> &'static str {
         match self {
+            Self::ChargingSchedule { .. } => "/vehicle/charging/reservation",
             Self::Vehicle { .. } => "/vehicle/control",
             Self::ChargingSettings { .. } => "/vehicle/charging/setting",
             Self::Charging { .. } => "/vehicle/charging/control",
@@ -54,6 +72,27 @@ impl Command {
     pub(crate) fn body(&self, vin: &str) -> Result<String, Error> {
         if vin.trim().is_empty() {
             return Err(Error::Configuration("VIN must not be empty"));
+        }
+        if let Self::ChargingSchedule {
+            start_hour,
+            start_minute,
+            end_hour,
+            end_minute,
+            public_station,
+            mode,
+            supports_target_soc,
+        } = self
+        {
+            crate::charging::ScheduleTime::new(*start_hour, *start_minute)?;
+            crate::charging::ScheduleTime::new(*end_hour, *end_minute)?;
+            if *public_station != 1 || !matches!(mode, 1..=3) {
+                return Err(Error::Configuration("invalid charging schedule command"));
+            }
+            if *mode == 3 && !supports_target_soc {
+                return Err(Error::Unsupported(
+                    "until-configured-SoC requires target SoC support",
+                ));
+            }
         }
         if let Self::ChargingSettings {
             target_soc,

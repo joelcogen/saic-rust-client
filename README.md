@@ -79,6 +79,7 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `vehicle-command VIN JSON` | Submit an explicit vehicle control payload |
 | `charging-command VIN JSON` | Submit an explicit charging control payload |
 | `charge-target VIN PERCENT supported\|unsupported` | Set target (40–100 in steps of 10); preserve current limit |
+| `charge-schedule VIN HH:MM HH:MM disabled\|until-configured-time\|until-configured-soc supported\|unsupported` | Set vehicle charging schedule; final argument is target SoC capability (see [time semantics](docs/charging.md#charging-schedules)) |
 | `charge-current VIN 6A\|8A\|16A\|MAX supported\|unsupported` | Set current limit; preserve target SoC |
 | `charging-start VIN` | Start charging |
 | `charging-stop VIN` | Stop charging without unlocking the cable |

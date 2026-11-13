@@ -38,6 +38,8 @@ impl fmt::Display for ApiFailure {
 pub enum Error {
     #[error("invalid configuration: {0}")]
     Configuration(&'static str),
+    #[error("unsupported operation: {0}")]
+    Unsupported(&'static str),
     #[error("authentication failed ({0})")]
     Authentication(ApiFailure),
     #[error("SAIC rejected the request ({0})")]

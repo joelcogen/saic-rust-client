@@ -657,3 +657,78 @@ async fn invalid_charge_settings_never_dispatch() {
     assert_eq!(client.commands, 0);
     assert!(client.reads.is_empty());
 }
+
+#[tokio::test]
+async fn charging_schedules_dispatch_without_reads_including_on_failure() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/charge_schedule.json")).unwrap();
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let cases = fixture["actions"].as_array().unwrap();
+        let input: String = cases
+            .iter()
+            .map(|c| {
+                format!(
+                    "charge-schedule SYNTHETICVIN {} {} {} supported\n",
+                    c["start"].as_str().unwrap(),
+                    c["end"].as_str().unwrap(),
+                    c["mode"].as_str().unwrap()
+                )
+            })
+            .collect();
+        run_session(&mut client, input.as_bytes(), &mut Vec::new())
+            .await
+            .unwrap();
+        assert_eq!(client.commands, cases.len());
+        assert!(client.reads.is_empty());
+        assert!(HELP.contains("charge-schedule"));
+        for (mut payload, case) in client.payloads.into_iter().zip(cases) {
+            assert_eq!(
+                payload.as_object_mut().unwrap().remove("kind"),
+                Some("ChargingSchedule".into())
+            );
+            assert_eq!(payload, case["payload"]);
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_or_unsupported_schedules_never_dispatch() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/charge_schedule.json")).unwrap();
+    let mut lines = vec![
+        "charge-schedule vin 00:00 23:59 until-configured-soc unsupported".to_owned(),
+        "charge-schedule vin 00:00 23:59 invalid supported".to_owned(),
+        "charge-schedule vin 00:00 23:59 disabled unknown".to_owned(),
+        "charge-schedule vin 00:00 23:59 disabled".to_owned(),
+        "charge-schedule vin 00:00 23:59 disabled supported extra".to_owned(),
+        "charge-schedule".to_owned(),
+    ];
+    for time in fixture["invalid_times"].as_array().unwrap() {
+        let time = time.as_str().unwrap();
+        lines.push(format!(
+            "charge-schedule vin {time} 06:00 disabled supported"
+        ));
+        lines.push(format!(
+            "charge-schedule vin 22:00 {time} disabled supported"
+        ));
+    }
+    for line in &lines {
+        assert!(parse_charging_control(line).is_err(), "{line}");
+    }
+    for mode in ["disabled", "until-configured-time"] {
+        assert!(parse_charging_control(&format!(
+            "charge-schedule vin 22:00 06:00 {mode} unsupported"
+        ))
+        .is_ok());
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, lines.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
+}

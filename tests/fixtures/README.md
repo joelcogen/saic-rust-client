@@ -84,3 +84,13 @@ Regenerate `charge_settings.json` with
 The pinned current-client mappings cover all seven target percentages and four
 current limits, including ignore codes that preserve companion settings and
 invalid input examples. See [charging documentation](../../docs/charging.md).
+
+## Charging schedules
+
+`charge_schedule.json` is generated offline with
+`python3 tests/fixtures/generate_charge_schedule.py`. It records synthetic
+reservation payloads from client `5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`
+(`set_schedule_charging` and its schema), covering all modes, midnight,
+overnight and equal bounds, and invalid times. Capability behavior follows
+gateway `ec814eca135792d8202dfd29d6e443b53746d2a1`
+`drivetrain_charging_schedule.py`. No production captures are used.
