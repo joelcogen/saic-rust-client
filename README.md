@@ -1,7 +1,7 @@
 # SAIC Rust client
 
-A Rust client for the SAIC MG iSMART API. Login and bounded vehicle/charging command transport are implemented.
-Vehicle reads and individual feature helpers will follow. We'll build the web service in a separate repository and
+A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
+transport are implemented. Individual control helpers will follow. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -29,6 +29,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 
 ## Documentation
 
+- [Vehicle reads](docs/reads.md): cached/live separation, typed data and capabilities.
 - [Command transport](docs/commands.md): envelopes, deadlines and unknown outcomes.
 - [Login specification](docs/login.md): API behavior, failure cases, and tests.
 - [Technical design](docs/technical-design.md): what belongs in the client,
@@ -73,6 +74,13 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `login` | Log in again using the same credentials |
 | `vehicle-command VIN JSON` | Submit an explicit vehicle control payload |
 | `charging-command VIN JSON` | Submit an explicit charging control payload |
+| `vehicles` | Discover account vehicles and model capabilities |
+| `vehicle-cache VIN` | Read SAIC's cached status only |
+| `vehicle-live VIN` | Explicit live vehicle refresh |
+| `charging-status VIN` | Read charging status |
+| `charging-management VIN` | Read charging management data |
+| `charging-settings VIN` | Read charging settings |
+| `battery-heating-schedule VIN` | Read the stored battery-heating schedule |
 | `logout` | Forget the local session without contacting SAIC |
 | `exit` or `quit` | Exit; EOF and Ctrl-C also exit |
 
@@ -93,7 +101,10 @@ charging-command SYNTHETICVIN00001 {"chrgCtrlReq":1,"tboxEleccLckCtrlReq":0,"tbo
 
 The vehicle example requests lights without horn; the charging example requests
 charging. All fields are caller-supplied protocol values. The CLI prints the
-outcome and code with identifiers and response data redacted.
+outcome and code with identifiers and response data redacted. Read commands print
+the returned type with data redacted; use the library fields to inspect values.
+Cached reads never fall back to live reads. To refresh after several controls,
+issue `vehicle-live VIN` explicitly when the sequence is finished.
 
 Use `cargo run --example cli -- --help` to see usage without reading `.env` or
 logging in. The old one-shot login example is replaced by this CLI.

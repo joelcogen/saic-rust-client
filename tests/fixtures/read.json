@@ -1,0 +1,7 @@
+{
+  "path": "/vehicle/status/cache?vin=db78889dc390d86be94a178ffc814121709616fdf341739a0db7619a5d800378&vehStatusReqType=2",
+  "timestamp": "1700000000123",
+  "tenant": "459771",
+  "token": "synthetic-token",
+  "verification": "4d1441b257cc10e4be54007e70f87cc78fb7060c324d2ac94516f258058e1650"
+}

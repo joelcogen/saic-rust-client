@@ -4,8 +4,8 @@ We'll build an async Rust client that talks directly to SAIC, using the Python
 client as the protocol reference. The web service will live in a separate
 repository and handle polling, preheating rules, and notifications. This is the
 design for that client. [Login](login.md) is implemented and tested offline;
-[command transport](commands.md) is implemented; vehicle reads and feature
-helpers are still planned.
+[command transport](commands.md) and [vehicle reads](reads.md) are implemented;
+individual control helpers are still planned.
 
 ## What belongs in the client
 

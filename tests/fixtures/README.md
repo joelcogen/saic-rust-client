@@ -28,3 +28,9 @@ them with the pinned Python source if the inputs change. See
 JSON; the token is included in the key prefix and HMAC input. The VIN hash is
 SHA-256 of `SYNTHETICVIN00001`. The generator is `generate_command.py` and does
 not make network requests.
+
+`read.json` is a synthetic empty-body GET signature vector, including the hashed
+VIN query string. Regenerate with `python3 tests/fixtures/generate_read.py`
+(standard library only). It follows `net/crypto.py` at revision
+`5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`. Read payload fixtures are inline
+in the Rust specs and contain only synthetic data.

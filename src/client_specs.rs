@@ -602,3 +602,154 @@ async fn command_validation_and_unpolled_futures_never_send() {
         .await
         .is_err());
 }
+
+#[tokio::test(start_paused = true)]
+async fn all_read_requests_match_reference_and_continue_only_the_same_event() {
+    use crate::reads::Read;
+    for (kind, path, events) in [
+        (Read::Vehicles, "/vehicle/list", false),
+        (Read::Cached, "/vehicle/status/cache", false),
+        (Read::Live, "/vehicle/status", true),
+        (Read::Charging, "/vehicle/charging/status", true),
+        (Read::Management, "/vehicle/charging/mgmtData", true),
+        (Read::Settings, "/vehicle/charging/setting", true),
+        (Read::BatteryHeating, "/charging/batteryHeating", false),
+    ] {
+        let mut client = authenticated().await;
+        let op = kind.operation("SYNTHETICVIN00001").unwrap();
+        let mut calls = 0;
+        let out = client
+            .operation_with(&op, Default::default(), std::future::pending(), |request| {
+                calls += 1;
+                assert_eq!(request.url().path(), format!("/api.app/v1{path}"));
+                assert_eq!(
+                    request.method(),
+                    if kind == Read::Settings {
+                        "POST"
+                    } else {
+                        "GET"
+                    }
+                );
+                assert_eq!(
+                    request
+                        .headers()
+                        .get("event-id")
+                        .map(|v| v.to_str().unwrap()),
+                    if events {
+                        Some(if calls == 1 { "0" } else { "read-event" })
+                    } else {
+                        None
+                    }
+                );
+                assert!(request.headers()["blade-auth"].is_sensitive());
+                assert!(!request.url().as_str().contains("SYNTHETICVIN"));
+                if kind == Read::Settings {
+                    let body: serde_json::Value = serde_json::from_str(&op.body).unwrap();
+                    assert_eq!(body.as_object().unwrap().len(), 4);
+                    for key in ["altngChrgCrntReq", "onBdChrgTrgtSOCReq", "tboxV2XSpSOCReq"] {
+                        assert_eq!(body[key], 0);
+                    }
+                    assert_eq!(body["vin"].as_str().unwrap().len(), 64);
+                    assert!(request.url().query().is_none());
+                } else {
+                    assert!(request.body().is_none());
+                    let query: Vec<_> = request.url().query_pairs().collect();
+                    if kind == Read::Vehicles {
+                        assert!(query.is_empty());
+                    } else {
+                        let vector: serde_json::Value =
+                            serde_json::from_str(include_str!("../tests/fixtures/read.json"))
+                                .unwrap();
+                        assert!(vector["path"]
+                            .as_str()
+                            .unwrap()
+                            .contains(query[0].1.as_ref()));
+                        assert_eq!(query[0].0, "vin");
+                        assert_eq!(
+                            query.len(),
+                            if matches!(kind, Read::Cached | Read::Live) {
+                                2
+                            } else {
+                                1
+                            }
+                        );
+                        if query.len() == 2 {
+                            assert_eq!(query[1], ("vehStatusReqType".into(), "2".into()));
+                        }
+                    }
+                }
+                let response = if events && calls == 1 {
+                    reply(1, Some("read-event"), false)
+                } else {
+                    reply(0, None, true)
+                };
+                async { Ok(response) }
+            })
+            .await
+            .unwrap();
+        assert!(matches!(out.state, crate::CommandState::Completed));
+        assert_eq!(calls, if events { 2 } else { 1 });
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn cached_reads_never_fall_back_or_continue_on_failure_or_missing_data() {
+    for kind in 0..7 {
+        let mut client = authenticated().await;
+        let op = crate::reads::Read::Cached
+            .operation("synthetic-vin")
+            .unwrap();
+        let mut calls = 0;
+        let out = client
+            .operation_with(&op, Default::default(), std::future::pending(), |request| {
+                calls += 1;
+                assert!(request.url().path().ends_with("/vehicle/status/cache"));
+                let result = match kind {
+                    0 => Err(Error::Transport),
+                    1 => Err(Error::Timeout),
+                    2 => Ok(reply(0, Some("pending"), false)),
+                    3 => Ok(reply(7, None, false)),
+                    4 => Ok(reply(401, None, false)),
+                    5 => Ok(reply(0, None, false)),
+                    _ => {
+                        let mut r = reply(0, None, true);
+                        r.body = Zeroizing::new(b"invalid".to_vec());
+                        Ok(r)
+                    }
+                };
+                async { result }
+            })
+            .await
+            .unwrap();
+        assert!(SaicClient::read_result::<crate::models::VehicleStatusCacheResp>(out).is_err());
+        assert_eq!(calls, 1);
+        assert_eq!(client.is_logged_in(), kind != 4);
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn read_deadlines_and_invalid_sessions_do_not_replay() {
+    let op = crate::reads::Read::Live.operation("vin").unwrap();
+    let mut client = client();
+    assert!(client
+        .operation_with(&op, Default::default(), std::future::pending(), |_| async {
+            panic!("no login")
+        })
+        .await
+        .is_err());
+    let mut client = authenticated().await;
+    let mut calls = 0;
+    let out = client
+        .operation_with(&op, Default::default(), std::future::pending(), |_| {
+            calls += 1;
+            std::future::pending()
+        })
+        .await
+        .unwrap();
+    assert!(matches!(
+        SaicClient::read_result::<crate::models::VehicleStatusResp>(out),
+        Err(Error::Timeout)
+    ));
+    assert_eq!(calls, 1);
+    assert!(crate::reads::Read::Live.operation(" ").is_err());
+}

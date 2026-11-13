@@ -71,7 +71,11 @@ pub(crate) fn encrypt_authenticated(
     let iv = Md5::digest(timestamp);
     let ciphertext = cbc::Encryptor::<aes::Aes128>::new(&key, &iv)
         .encrypt_padded_vec_mut::<Pkcs7>(plaintext.as_bytes());
-    let body = hex::encode(ciphertext);
+    let body = if plaintext.is_empty() {
+        String::new()
+    } else {
+        hex::encode(ciphertext)
+    };
     let hmac_key = md5_hex(format!("{}{timestamp}", hex::encode(key)));
     let mut mac = Hmac::<Sha256>::new_from_slice(hmac_key.as_bytes())
         .expect("HMAC accepts keys of any length");

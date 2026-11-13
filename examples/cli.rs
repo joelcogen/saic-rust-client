@@ -15,6 +15,13 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  vehicles                   Discover vehicles and capabilities
+  vehicle-cache VIN          Read cached vehicle status only
+  vehicle-live VIN           Explicit live vehicle refresh
+  charging-status VIN        Read charging status
+  charging-management VIN    Read charging management data
+  charging-settings VIN      Read charging settings
+  battery-heating-schedule VIN  Read stored heating schedule
   exit    Exit the CLI (quit and EOF also work)";
 
 #[tokio::main(flavor = "current_thread")]
@@ -90,6 +97,7 @@ fn read_settings(reader: impl Read) -> Result<Settings, &'static str> {
 
 // Keep command handling testable without constructing a real HTTP client.
 trait Session {
+    async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error>;
     async fn command(&mut self, vin: &str, command: &Command) -> Result<CommandOutcome, Error>;
     async fn login(&mut self) -> Result<(), Error>;
     fn remaining(&self) -> Option<Duration>;
@@ -97,6 +105,23 @@ trait Session {
 }
 
 impl Session for SaicClient {
+    async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error> {
+        let options = Default::default();
+        // Debug intentionally redacts identifiers, location and raw server data.
+        Ok(match operation {
+            ReadCommand::Vehicles => format!("{:?}", self.vehicles().await?),
+            ReadCommand::Cached => format!("{:?}", self.vehicle_status_cached(vin, options).await?),
+            ReadCommand::Live => format!("{:?}", self.vehicle_status_live(vin, options).await?),
+            ReadCommand::Charging => format!("{:?}", self.charging_status(vin, options).await?),
+            ReadCommand::Management => {
+                format!("{:?}", self.charging_management(vin, options).await?)
+            }
+            ReadCommand::Settings => format!("{:?}", self.charging_settings(vin, options).await?),
+            ReadCommand::BatteryHeating => {
+                format!("{:?}", self.battery_heating_schedule(vin, options).await?)
+            }
+        })
+    }
     async fn command(&mut self, vin: &str, command: &Command) -> Result<CommandOutcome, Error> {
         self.execute_command(vin, command, Default::default()).await
     }
@@ -162,7 +187,13 @@ async fn run_session(
                     Err(error) => writeln!(output, "{error}")?,
                 }
             }
-            _ => writeln!(output, "Unknown command. Type help for commands.")?,
+            text => match parse_read(text) {
+                Ok((operation, vin)) => match client.read(operation, vin).await {
+                    Ok(result) => writeln!(output, "{result}")?,
+                    Err(error) => writeln!(output, "Read failed: {error}")?,
+                },
+                Err(error) => writeln!(output, "{error}")?,
+            },
         }
     }
     client.logout();
@@ -193,4 +224,38 @@ fn parse_command(line: &str) -> Result<(&str, Command), &'static str> {
     object.insert("kind".into(), kind.into());
     let command = serde_json::from_value(value).map_err(|_| "Invalid command fields")?;
     Ok((vin, command))
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ReadCommand {
+    Vehicles,
+    Cached,
+    Live,
+    Charging,
+    Management,
+    Settings,
+    BatteryHeating,
+}
+
+fn parse_read(line: &str) -> Result<(ReadCommand, &str), &'static str> {
+    let mut parts = line.split_whitespace();
+    let operation = match parts.next() {
+        Some("vehicles") => ReadCommand::Vehicles,
+        Some("vehicle-cache") => ReadCommand::Cached,
+        Some("vehicle-live") => ReadCommand::Live,
+        Some("charging-status") => ReadCommand::Charging,
+        Some("charging-management") => ReadCommand::Management,
+        Some("charging-settings") => ReadCommand::Settings,
+        Some("battery-heating-schedule") => ReadCommand::BatteryHeating,
+        _ => return Err("Unknown command. Type help for commands."),
+    };
+    let vin = if operation == ReadCommand::Vehicles {
+        ""
+    } else {
+        parts.next().ok_or("Expected exactly one VIN")?
+    };
+    if parts.next().is_some() {
+        return Err("Unexpected read arguments");
+    }
+    Ok((operation, vin))
 }

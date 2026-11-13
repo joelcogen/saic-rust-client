@@ -4,11 +4,21 @@ use super::*;
 struct FakeSession {
     logins: usize,
     commands: usize,
+    reads: Vec<(ReadCommand, String)>,
+    fail_reads: bool,
     logged_in: bool,
     fail_on: Option<usize>,
 }
 
 impl Session for FakeSession {
+    async fn read(&mut self, operation: ReadCommand, vin: &str) -> Result<String, Error> {
+        self.reads.push((operation, vin.to_owned()));
+        if self.fail_reads {
+            Err(Error::Timeout)
+        } else {
+            Ok("Read completed (data redacted)".into())
+        }
+    }
     async fn command(&mut self, _vin: &str, _command: &Command) -> Result<CommandOutcome, Error> {
         self.commands += 1;
         Ok(CommandOutcome::default())
@@ -161,4 +171,76 @@ exit
     assert!(!text.contains("SYNTHETICVIN"));
     assert!(HELP.contains("vehicle-command"));
     assert!(HELP.contains("charging-command"));
+}
+
+#[tokio::test]
+async fn all_reads_are_explicit_and_failures_do_not_trigger_refreshes() {
+    for fail_reads in [false, true] {
+        let mut client = FakeSession {
+            fail_reads,
+            ..Default::default()
+        };
+        let mut output = Vec::new();
+        run_session(&mut client, b"vehicles\nvehicle-cache vin\nvehicle-live vin\ncharging-status vin\ncharging-management vin\ncharging-settings vin\nbattery-heating-schedule vin\nexit\n".as_slice(), &mut output).await.unwrap();
+        assert_eq!(
+            client.reads.iter().map(|(r, _)| *r).collect::<Vec<_>>(),
+            vec![
+                ReadCommand::Vehicles,
+                ReadCommand::Cached,
+                ReadCommand::Live,
+                ReadCommand::Charging,
+                ReadCommand::Management,
+                ReadCommand::Settings,
+                ReadCommand::BatteryHeating
+            ]
+        );
+        assert_eq!(client.reads[0].1, "");
+        assert!(client.reads[1..].iter().all(|(_, vin)| vin == "vin"));
+        assert_eq!(client.commands, 0);
+        assert_eq!(client.logins, 1);
+        if fail_reads {
+            assert_eq!(
+                String::from_utf8(output)
+                    .unwrap()
+                    .matches("Read failed")
+                    .count(),
+                7
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_read_arguments_never_send() {
+    let mut client = FakeSession::default();
+    let mut output = Vec::new();
+    for command in [
+        "vehicle-cache",
+        "vehicle-live",
+        "charging-status",
+        "charging-management",
+        "charging-settings",
+        "battery-heating-schedule",
+    ] {
+        assert!(HELP.contains(command));
+        assert!(parse_read(command).is_err());
+        assert!(parse_read(&format!("{command} vin extra")).is_err());
+    }
+    run_session(
+        &mut client,
+        b"vehicles extra\nvehicle-cache\nvehicle-live vin extra\nexit\n".as_slice(),
+        &mut output,
+    )
+    .await
+    .unwrap();
+    assert!(client.reads.is_empty());
+}
+
+#[tokio::test]
+async fn controls_can_be_followed_by_one_explicit_refresh() {
+    let mut client = FakeSession::default();
+    let mut output = Vec::new();
+    run_session(&mut client, b"charging-command vin {\"chrgCtrlReq\":1,\"tboxEleccLckCtrlReq\":0,\"tboxV2XReq\":0}\ncharging-command vin {\"chrgCtrlReq\":0,\"tboxEleccLckCtrlReq\":1,\"tboxV2XReq\":0}\nvehicle-live vin\nexit\n".as_slice(), &mut output).await.unwrap();
+    assert_eq!(client.commands, 2);
+    assert_eq!(client.reads, vec![(ReadCommand::Live, "vin".into())]);
 }

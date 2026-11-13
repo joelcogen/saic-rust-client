@@ -187,3 +187,19 @@ fn authenticated_command_matches_independent_python_vector() {
         v["plaintext"]
     );
 }
+
+#[test]
+fn empty_get_body_signature_includes_query_and_matches_python() {
+    let v: serde_json::Value =
+        serde_json::from_str(include_str!("../tests/fixtures/read.json")).unwrap();
+    let (body, signature) = super::encrypt_authenticated(
+        v["path"].as_str().unwrap(),
+        v["timestamp"].as_str().unwrap(),
+        v["tenant"].as_str().unwrap(),
+        v["token"].as_str().unwrap(),
+        "application/json",
+        "",
+    );
+    assert!(body.is_empty());
+    assert_eq!(signature, v["verification"]);
+}

@@ -11,6 +11,11 @@ Command transport in `src/command.rs`, `src/client.rs`, `src/protocol.rs` and
 particularly `api/base.py`, `api/vehicle/`, `api/vehicle_charging/` and
 `net/crypto.py`.
 
+Read operations and wire models in `src/reads.rs`, `src/models.rs`, and
+`src/client.rs`, and `tests/fixtures/read.json`, follow the same pinned revision,
+particularly `api/vehicle/schema.py`, `api/vehicle_charging/schema.py`,
+`api/schema.py` and `net/crypto.py`.
+
 The upstream license follows.
 
 MIT License

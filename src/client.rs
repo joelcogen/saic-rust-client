@@ -87,8 +87,23 @@ impl SaicClient {
         options: crate::CommandOptions,
         cancel: C,
     ) -> Result<crate::CommandOutcome, Error> {
+        let operation = crate::reads::Operation {
+            path: command.path().into(),
+            body: Zeroizing::new(command.body(vin)?),
+            method: reqwest::Method::POST,
+            events: true,
+        };
+        self.execute_operation(&operation, options, cancel).await
+    }
+
+    async fn execute_operation<C: Future<Output = ()>>(
+        &mut self,
+        operation: &crate::reads::Operation,
+        options: crate::CommandOptions,
+        cancel: C,
+    ) -> Result<crate::CommandOutcome, Error> {
         let http = self.http.clone();
-        self.command_with(vin, command, options, cancel, |request| {
+        self.operation_with(operation, options, cancel, |request| {
             let http = http.clone();
             async move {
                 let mut response = http.execute(request).await.map_err(Error::transport)?;
@@ -111,10 +126,72 @@ impl SaicClient {
         .await
     }
 
+    pub(crate) async fn read<T: serde::de::DeserializeOwned>(
+        &mut self,
+        kind: crate::reads::Read,
+        vin: &str,
+        options: crate::CommandOptions,
+    ) -> Result<T, Error> {
+        let operation = kind.operation(vin)?;
+        let outcome = self
+            .execute_operation(&operation, options, std::future::pending())
+            .await?;
+        Self::read_result(outcome)
+    }
+
+    fn read_result<T: serde::de::DeserializeOwned>(
+        outcome: crate::CommandOutcome,
+    ) -> Result<T, Error> {
+        use crate::{CommandState, UnknownReason};
+        let failure = crate::ApiFailure {
+            http_status: outcome.http_status.unwrap_or(0),
+            saic_code: outcome.saic_code,
+            message: outcome.message,
+        };
+        match outcome.state {
+            CommandState::Completed => serde_json::from_value(
+                outcome
+                    .data
+                    .ok_or(Error::InvalidResponse("missing read result"))?,
+            )
+            .map_err(|_| Error::InvalidResponse("invalid typed read result")),
+            CommandState::Rejected => Err(Error::Rejected(failure)),
+            CommandState::InvalidSession => Err(Error::Authentication(failure)),
+            CommandState::Unknown(UnknownReason::Timeout) => Err(Error::Timeout),
+            CommandState::Unknown(UnknownReason::Failure(error)) => Err(error),
+            CommandState::Unknown(UnknownReason::Cancelled) => {
+                Err(Error::InvalidResponse("read cancelled"))
+            }
+        }
+    }
+
+    #[cfg(test)]
     async fn command_with<F, Fut, C>(
         &mut self,
         vin: &str,
         command: &crate::Command,
+        options: crate::CommandOptions,
+        cancel: C,
+        exchange: F,
+    ) -> Result<crate::CommandOutcome, Error>
+    where
+        F: FnMut(Request) -> Fut,
+        Fut: Future<Output = Result<crate::command::Reply, Error>>,
+        C: Future<Output = ()>,
+    {
+        let operation = crate::reads::Operation {
+            path: command.path().into(),
+            body: Zeroizing::new(command.body(vin)?),
+            method: reqwest::Method::POST,
+            events: true,
+        };
+        self.operation_with(&operation, options, cancel, exchange)
+            .await
+    }
+
+    async fn operation_with<F, Fut, C>(
+        &mut self,
+        operation: &crate::reads::Operation,
         options: crate::CommandOptions,
         cancel: C,
         mut exchange: F,
@@ -137,15 +214,12 @@ impl SaicClient {
         let deadline = tokio::time::Instant::now()
             .checked_add(options.deadline)
             .ok_or(Error::Configuration("command deadline out of range"))?;
-        let body = Zeroizing::new(command.body(vin)?);
         let mut outcome = CommandOutcome::default();
         tokio::pin!(cancel);
         loop {
-            let request = match self.command_request(
-                command.path(),
-                &body,
-                outcome.event_id.as_deref().unwrap_or("0"),
-            ) {
+            let request = match self
+                .operation_request(operation, outcome.event_id.as_deref().unwrap_or("0"))
+            {
                 Ok(request) => request,
                 Err(error) if outcome.event_id.is_none() => return Err(error),
                 Err(error) => {
@@ -174,6 +248,12 @@ impl SaicClient {
                     });
                     break;
                 }
+                Ok(true) if !operation.events => {
+                    outcome.state = CommandState::Unknown(UnknownReason::Failure(
+                        Error::InvalidResponse("unexpected pending result for single read"),
+                    ));
+                    break;
+                }
                 Ok(true) => {}
             }
             tokio::select! {
@@ -186,7 +266,13 @@ impl SaicClient {
         Ok(outcome)
     }
 
-    fn command_request(&self, path: &str, plaintext: &str, event: &str) -> Result<Request, Error> {
+    fn operation_request(
+        &self,
+        operation: &crate::reads::Operation,
+        event: &str,
+    ) -> Result<Request, Error> {
+        let path = &operation.path;
+        let plaintext = &operation.body;
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|_| Error::Clock)?
@@ -206,6 +292,7 @@ impl SaicClient {
             .join(&format!("../{}", path.trim_start_matches('/')))
             .map_err(|_| Error::Configuration("invalid command URL"))?;
         let mut request = self.post(url).build().map_err(Error::transport)?;
+        *request.method_mut() = operation.method.clone();
         let headers = request.headers_mut();
         for (name, value) in [
             ("blade-auth", token.as_str()),
@@ -223,7 +310,12 @@ impl SaicClient {
                 value,
             );
         }
-        *request.body_mut() = Some(body.into());
+        if !operation.events {
+            headers.remove("event-id");
+        }
+        if !body.is_empty() {
+            *request.body_mut() = Some(body.into());
+        }
         Ok(request)
     }
 

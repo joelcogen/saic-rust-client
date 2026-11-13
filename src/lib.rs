@@ -24,7 +24,9 @@ mod client;
 mod command;
 mod config;
 mod error;
+pub mod models;
 mod protocol;
+mod reads;
 
 pub use client::SaicClient;
 pub use command::{
