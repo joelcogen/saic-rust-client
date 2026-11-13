@@ -4,6 +4,8 @@ use super::*;
 struct FakeSession {
     logins: usize,
     commands: usize,
+    fail_commands: bool,
+    payloads: Vec<serde_json::Value>,
     reads: Vec<(ReadCommand, String)>,
     fail_reads: bool,
     logged_in: bool,
@@ -21,6 +23,10 @@ impl Session for FakeSession {
     }
     async fn command(&mut self, _vin: &str, _command: &Command) -> Result<CommandOutcome, Error> {
         self.commands += 1;
+        self.payloads.push(serde_json::to_value(_command).unwrap());
+        if self.fail_commands {
+            return Err(Error::Timeout);
+        }
         Ok(CommandOutcome::default())
     }
     async fn login(&mut self) -> Result<(), Error> {
@@ -243,4 +249,76 @@ async fn controls_can_be_followed_by_one_explicit_refresh() {
     run_session(&mut client, b"charging-command vin {\"chrgCtrlReq\":1,\"tboxEleccLckCtrlReq\":0,\"tboxV2XReq\":0}\ncharging-command vin {\"chrgCtrlReq\":0,\"tboxEleccLckCtrlReq\":1,\"tboxV2XReq\":0}\nvehicle-live vin\nexit\n".as_slice(), &mut output).await.unwrap();
     assert_eq!(client.commands, 2);
     assert_eq!(client.reads, vec![(ReadCommand::Live, "vin".into())]);
+}
+
+#[tokio::test]
+async fn climate_commands_send_once_even_when_repeated_or_failed_without_reads() {
+    for fail_commands in [false, true] {
+        let mut client = FakeSession {
+            fail_commands,
+            ..Default::default()
+        };
+        let mut output = Vec::new();
+        let input = "ac-start vin eh32 17\nac-stop vin\nac-blowing vin\ndefrost-start vin\ndefrost-stop vin\nac-temperature vin mzs3e 31\nac-temperature vin mzs3e 31\nclimate-control vin 2 omit 8\nexit\n";
+        run_session(&mut client, input.as_bytes(), &mut output)
+            .await
+            .unwrap();
+        assert_eq!(client.commands, 8);
+        assert_eq!(client.logins, 1);
+        assert!(client.reads.is_empty());
+        assert_eq!(client.payloads[1], client.payloads[4]);
+        assert_eq!(client.payloads[5], client.payloads[6]);
+        assert_eq!(client.payloads[0]["rvcParams"][1]["paramValue"], "Aw==");
+        assert_eq!(client.payloads[5]["rvcParams"][1]["paramValue"], "EQ==");
+        for line in input.lines().take(8) {
+            assert!(HELP.contains(line.split_whitespace().next().unwrap()));
+        }
+        if fail_commands {
+            assert_eq!(
+                String::from_utf8(output)
+                    .unwrap()
+                    .matches("Command failed")
+                    .count(),
+                8
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn invalid_climate_inputs_never_reach_session_commands() {
+    let invalid = [
+        "ac-start",
+        "ac-start vin",
+        "ac-start vin unknown 22",
+        "ac-start vin eh32 16",
+        "ac-start vin eh32 32",
+        "ac-start vin standard 15",
+        "ac-start vin standard 29",
+        "ac-temperature vin mzs3e 15",
+        "ac-temperature vin mzs3e 32",
+        "ac-temperature vin standard 22.5",
+        "ac-temperature vin standard NaN",
+        "ac-stop",
+        "ac-stop vin extra",
+        "ac-blowing",
+        "defrost-start",
+        "defrost-stop",
+        "climate-control vin -1 on 8",
+        "climate-control vin 256 off 8",
+        "climate-control vin 0 omit -1",
+        "climate-control vin 2 on 256",
+        "climate-control vin 2 unknown 8",
+        "climate-control vin 2 on",
+        "climate-control vin 2 on 8 extra",
+    ];
+    for line in invalid {
+        assert!(parse_climate(line).is_err(), "{line}");
+    }
+    let mut client = FakeSession::default();
+    run_session(&mut client, invalid.join("\n").as_bytes(), &mut Vec::new())
+        .await
+        .unwrap();
+    assert_eq!(client.commands, 0);
+    assert!(client.reads.is_empty());
 }

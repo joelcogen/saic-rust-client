@@ -21,6 +21,7 @@
 #![forbid(unsafe_code)]
 
 mod client;
+mod climate;
 mod command;
 mod config;
 mod error;
@@ -29,6 +30,7 @@ mod protocol;
 mod reads;
 
 pub use client::SaicClient;
+pub use climate::TemperatureProfile;
 pub use command::{
     Command, CommandOptions, CommandOutcome, CommandState, ControlParameter, UnknownReason,
 };

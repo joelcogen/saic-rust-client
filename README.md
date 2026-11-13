@@ -1,7 +1,7 @@
 # SAIC Rust client
 
 A Rust client for the SAIC MG iSMART API. Login, vehicle discovery and status reads, and bounded vehicle/charging command
-transport are implemented. Individual control helpers will follow. We'll build the web service in a separate repository and
+transport and cabin climate controls are implemented. We'll build the web service in a separate repository and
 use this crate as a dependency.
 
 The package is `saic-client` (`saic_client` in Rust code). Publishing is disabled.
@@ -30,6 +30,7 @@ The config also supports `with_base_url`, `with_api_identity`, and `with_timeout
 ## Documentation
 
 - [Vehicle reads](docs/reads.md): cached/live separation, typed data and capabilities.
+- [Cabin climate](docs/climate.md): AC, ventilation, front defrost and explicit temperatures.
 - [Command transport](docs/commands.md): envelopes, deadlines and unknown outcomes.
 - [Login specification](docs/login.md): API behavior, failure cases, and tests.
 - [Technical design](docs/technical-design.md): what belongs in the client,
@@ -74,6 +75,13 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `login` | Log in again using the same credentials |
 | `vehicle-command VIN JSON` | Submit an explicit vehicle control payload |
 | `charging-command VIN JSON` | Submit an explicit charging control payload |
+| `ac-start VIN PROFILE CELSIUS` | Start AC at the supplied target |
+| `ac-stop VIN` | Stop AC |
+| `ac-blowing VIN` | Start ventilation only |
+| `defrost-start VIN` | Start front defrost |
+| `defrost-stop VIN` | Stop AC, including front defrost |
+| `ac-temperature VIN PROFILE CELSIUS` | Reissue AC start, even for an unchanged target |
+| `climate-control VIN FAN AC INDEX` | Explicit protocol bytes (0–255); AC is `on`, `off`, or `omit` |
 | `vehicles` | Discover account vehicles and model capabilities |
 | `vehicle-cache VIN` | Read SAIC's cached status only |
 | `vehicle-live VIN` | Explicit live vehicle refresh |
@@ -83,6 +91,10 @@ Starting it logs in to MG Europe, then waits for commands on the same client:
 | `battery-heating-schedule VIN` | Read the stored battery-heating schedule |
 | `logout` | Forget the local session without contacting SAIC |
 | `exit` or `quit` | Exit; EOF and Ctrl-C also exit |
+
+Climate profiles are `eh32` (17–31 °C), `mzs3e` (16–31 °C), and `standard`
+(16–28 °C). Select one from known vehicle context; targets are whole degrees.
+No climate command fetches current state. See [climate semantics](docs/climate.md).
 
 The CLI reads `.env` from the current directory without searching parent
 directories or loading values into the process environment. It doesn't take

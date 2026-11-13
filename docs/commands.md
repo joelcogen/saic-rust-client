@@ -4,8 +4,8 @@
 `Command::Vehicle` or `Command::Charging` envelope. These map to
 `POST /vehicle/control` and `POST /vehicle/charging/control`. VINs are SHA-256
 hashed internally. All payload fields are explicit; the transport does not
-infer model capabilities or obtain existing state. Individual feature helpers
-and other charging endpoints are outside this transport milestone.
+infer model capabilities or obtain existing state. Use the [climate builders](climate.md) for validated cabin climate payloads.
+Other charging endpoints are outside this transport milestone.
 
 Commands use the login session's `blade-auth` token in both the header and
 request encryption/signature. An absent or locally expired session fails before

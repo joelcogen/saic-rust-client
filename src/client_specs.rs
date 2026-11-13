@@ -753,3 +753,54 @@ async fn read_deadlines_and_invalid_sessions_do_not_replay() {
     assert_eq!(calls, 1);
     assert!(crate::reads::Read::Live.operation(" ").is_err());
 }
+
+#[tokio::test(start_paused = true)]
+async fn climate_modes_only_continue_the_same_command_on_success_or_failure() {
+    use crate::{Command, TemperatureProfile};
+    for command in [
+        Command::start_ac(TemperatureProfile::Eh32, 17).unwrap(),
+        Command::stop_ac(),
+        Command::start_ac_blowing(),
+        Command::start_front_defrost(),
+        Command::stop_front_defrost(),
+        Command::set_ac_temperature(TemperatureProfile::Mzs3e, 31).unwrap(),
+        Command::control_climate(3, Some(true), 9).unwrap(),
+    ] {
+        for fail in [false, true] {
+            let mut client = authenticated().await;
+            let mut calls = 0;
+            let outcome = client
+                .command_with(
+                    "SYNTHETICVIN",
+                    &command,
+                    Default::default(),
+                    std::future::pending(),
+                    |request| {
+                        calls += 1;
+                        assert_eq!(request.method(), "POST");
+                        assert_eq!(request.url().path(), "/api.app/v1/vehicle/control");
+                        assert_eq!(
+                            request.headers()["event-id"],
+                            if calls == 1 { "0" } else { "synthetic-event" }
+                        );
+                        let response = if calls == 1 {
+                            Ok(reply(1, Some("synthetic-event"), false))
+                        } else if fail {
+                            Err(Error::Transport)
+                        } else {
+                            Ok(reply(0, None, true))
+                        };
+                        async { response }
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(calls, 2);
+            if fail {
+                assert!(matches!(outcome.state, crate::CommandState::Unknown(_)));
+            } else {
+                assert!(matches!(outcome.state, crate::CommandState::Completed));
+            }
+        }
+    }
+}

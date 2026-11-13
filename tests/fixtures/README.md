@@ -34,3 +34,15 @@ VIN query string. Regenerate with `python3 tests/fixtures/generate_read.py`
 (standard library only). It follows `net/crypto.py` at revision
 `5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`. Read payload fixtures are inline
 in the Rust specs and contain only synthetic data.
+
+## Climate payloads
+
+`climate.json` is generated offline by `python3 tests/fixtures/generate_climate.py`.
+It ports the payload rules from Python client commit
+`5ffd4e2bbb501d1afbfb272d1f546c0dd2030d0e`, `api/vehicle/climate/__init__.py`.
+It covers all named climate modes, all three AC flag choices, fan-zero
+normalization, and byte/profile boundaries. All inputs are synthetic.
+Temperature profile ranges come from the gateway revision recorded in
+[climate documentation](../../docs/climate.md). Invalid inputs are tested in
+Rust and CLI specs; they never produce a request. Attribution is in
+[third-party notices](../../THIRD_PARTY_NOTICES.md).

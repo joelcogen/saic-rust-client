@@ -6,7 +6,9 @@ use std::{
     time::Duration,
 };
 
-use saic_client::{ClientConfig, Command, CommandOutcome, Credentials, Error, SaicClient};
+use saic_client::{
+    ClientConfig, Command, CommandOutcome, Credentials, Error, SaicClient, TemperatureProfile,
+};
 
 const HELP: &str = "Commands:
   help    Show commands
@@ -15,6 +17,14 @@ const HELP: &str = "Commands:
   logout  Forget the local session (no request)
   vehicle-command VIN JSON   Submit a Vehicle command payload
   charging-command VIN JSON  Submit a Charging command payload
+  ac-start VIN PROFILE CELSIUS  Start AC at target temperature
+  ac-stop VIN                  Stop AC
+  ac-blowing VIN               Start ventilation only
+  defrost-start VIN            Start front defrost
+  defrost-stop VIN             Stop AC (including front defrost)
+  ac-temperature VIN PROFILE CELSIUS  Reissue AC start at target
+  climate-control VIN FAN AC INDEX    Protocol bytes 0..255; AC on/off/omit
+  PROFILE is standard, eh32, or mzs3e; Celsius must fit that profile
   vehicles                   Discover vehicles and capabilities
   vehicle-cache VIN          Read cached vehicle status only
   vehicle-live VIN           Explicit live vehicle refresh
@@ -187,6 +197,13 @@ async fn run_session(
                     Err(error) => writeln!(output, "{error}")?,
                 }
             }
+            text if is_climate_command(text) => match parse_climate(text) {
+                Ok((vin, command)) => match client.command(vin, &command).await {
+                    Ok(outcome) => writeln!(output, "{outcome:?}")?,
+                    Err(error) => writeln!(output, "Command failed: {error}")?,
+                },
+                Err(error) => writeln!(output, "{error}")?,
+            },
             text => match parse_read(text) {
                 Ok((operation, vin)) => match client.read(operation, vin).await {
                     Ok(result) => writeln!(output, "{result}")?,
@@ -258,4 +275,57 @@ fn parse_read(line: &str) -> Result<(ReadCommand, &str), &'static str> {
         return Err("Unexpected read arguments");
     }
     Ok((operation, vin))
+}
+
+fn is_climate_command(line: &str) -> bool {
+    matches!(
+        line.split_whitespace().next(),
+        Some(
+            "ac-start"
+                | "ac-stop"
+                | "ac-blowing"
+                | "defrost-start"
+                | "defrost-stop"
+                | "ac-temperature"
+                | "climate-control"
+        )
+    )
+}
+
+fn parse_climate(line: &str) -> Result<(&str, Command), &'static str> {
+    let parts: Vec<_> = line.split_whitespace().collect();
+    let number = |s: &str| s.parse::<i16>().map_err(|_| "Expected an integer");
+    let command = match parts.as_slice() {
+        ["ac-stop", _] => Command::stop_ac(),
+        ["ac-blowing", _] => Command::start_ac_blowing(),
+        ["defrost-start", _] => Command::start_front_defrost(),
+        ["defrost-stop", _] => Command::stop_front_defrost(),
+        [operation @ ("ac-start" | "ac-temperature"), _, profile, celsius] => {
+            let profile = match *profile {
+                "standard" => TemperatureProfile::Standard,
+                "eh32" => TemperatureProfile::Eh32,
+                "mzs3e" => TemperatureProfile::Mzs3e,
+                _ => return Err("Expected profile standard, eh32, or mzs3e"),
+            };
+            let celsius = number(celsius)?;
+            if *operation == "ac-start" {
+                Command::start_ac(profile, celsius)
+            } else {
+                Command::set_ac_temperature(profile, celsius)
+            }
+            .map_err(|_| "Temperature outside vehicle profile bounds")?
+        }
+        ["climate-control", _, fan, ac, index] => {
+            let ac = match *ac {
+                "on" => Some(true),
+                "off" => Some(false),
+                "omit" => None,
+                _ => return Err("Expected AC on, off, or omit"),
+            };
+            Command::control_climate(number(fan)?, ac, number(index)?)
+                .map_err(|_| "Fan and temperature index must be 0..255")?
+        }
+        _ => return Err("Invalid climate arguments. Type help for commands."),
+    };
+    Ok((parts[1], command))
 }
